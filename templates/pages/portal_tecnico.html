@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Técnico</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* Estilo simple para el body simulando un celular */
+        body {
+            background-color: #f3f4f6; /* gris claro */
+        }
+        /* Modo oscuro para el simulador */
+        .dark body {
+            background-color: #111827; /* gris oscuro */
+        }
+    </style>
+</head>
+<body class="dark"> <div class="max-w-md mx-auto min-h-screen bg-white dark:bg-gray-900 shadow-xl">
+        <header class="bg-gray-800 p-4 shadow-md sticky top-0 z-10">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold text-white">Mis Órdenes de Trabajo</h1>
+                <a href="{% url 'account_logout' %}" class="text-sm text-red-400 hover:text-red-300">Salir</a>
+            </div>
+        </header>
+
+        <main id="lista-mis-ordenes" class="p-4 space-y-4">
+            <p class="text-center text-gray-400 py-10">Cargando órdenes...</p>
+        </main>
+    </div>
+
+    <script>
+        // --- Helper CSRF ---
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // --- Función para actualizar estado ---
+        async function updateOrderStatus(ordenId, nuevoEstado) {
+            const card = document.getElementById(`orden-${ordenId}`);
+            card.style.opacity = '0.5';
+
+            try {
+                const response = await fetch(`/api/v1/ordenes/${ordenId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        estado: nuevoEstado
+                    })
+                });
+
+                if (response.ok) {
+                    // Si se actualiza, recargamos la lista
+                    loadMyOrders();
+                } else {
+                    const errorData = await response.json();
+                    alert(`Error: ${JSON.stringify(errorData)}`);
+                    card.style.opacity = '1';
+                }
+            } catch (error) {
+                console.error("Error al actualizar estado:", error);
+                card.style.opacity = '1';
+            }
+        }
+
+        // --- Función para renderizar tarjetas ---
+        function createOrderCard(orden) {
+            const card = document.createElement('div');
+            card.className = 'bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700';
+            card.id = `orden-${orden.id}`;
+
+            // Botones de acción según el estado
+            let buttons = '';
+            if (orden.estado === 'ASIGNADA') {
+                buttons = `
+                    <button 
+                        onclick="updateOrderStatus(${orden.id}, 'EN_CAMINO')"
+                        class="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
+                        Marcar "En Camino"
+                    </button>
+                `;
+            } else if (orden.estado === 'EN_CAMINO') {
+                buttons = `
+                    <button 
+                        onclick="updateOrderStatus(${orden.id}, 'EN_PROCESO')"
+                        class="w-full mt-4 px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg font-semibold hover:bg-yellow-600">
+                        Marcar "Inicié Trabajo" (En Proceso)
+                    </button>
+                `;
+            } else if (orden.estado === 'EN_PROCESO') {
+                buttons = `
+                    <button 
+                        onclick="updateOrderStatus(${orden.id}, 'TERMINADO')"
+                        class="w-full mt-4 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
+                        Marcar "Trabajo Terminado"
+                    </button>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-bold text-gray-500 dark:text-gray-400">OT #${orden.id}</span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded ${orden.estado === 'ASIGNADA' ? 'bg-yellow-200 text-yellow-800' : 'bg-blue-200 text-blue-800'}">
+                        ${orden.estado}
+                    </span>
+                </div>
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-md mb-2">${orden.cliente_detalle?.nombre || 'Cliente'}</h3>
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2"><strong>Dirección:</strong> ${orden.cliente_detalle?.direccion || 'No especificada'}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300 mb-3"><strong>Falla:</strong> ${orden.descripcion}</p>
+                
+                ${buttons}
+            `;
+            return card;
+        }
+
+        // --- Función Principal de Carga ---
+        async function loadMyOrders() {
+            const container = document.getElementById('lista-mis-ordenes');
+            container.innerHTML = '<p class="text-center text-gray-400 py-10">Cargando órdenes...</p>';
+            
+            try {
+                // Esta es la API segura que creamos
+                const response = await fetch('/api/v1/mis-ordenes/');
+                
+                if (!response.ok) {
+                    if (response.status === 403) {
+                         container.innerHTML = '<p class="text-center text-red-400 py-10">Error: No tienes permiso o no eres un técnico válido.</p>';
+                    } else {
+                         container.innerHTML = '<p class="text-center text-red-400 py-10">Error al cargar datos.</p>';
+                    }
+                    return;
+                }
+
+                const ordenes = await response.json();
+                container.innerHTML = ''; // Limpiamos
+
+                if (ordenes.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-400 py-10">No tienes órdenes asignadas por el momento.</p>';
+                } else {
+                    ordenes.forEach(orden => {
+                        container.appendChild(createOrderCard(orden));
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error al cargar mis órdenes:", error);
+                container.innerHTML = '<p class="text-center text-red-400 py-10">Error de conexión.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadMyOrders);
+    </script>
+</body>
+</html>

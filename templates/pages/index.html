@@ -1,0 +1,286 @@
+{% extends 'components/Layout/base_extendido.html' %}
+{% load static %}   
+{% load humanize %}
+
+{% block content_main %} 
+<div class="min-h-screen px-4 py-6">
+    
+    <!-- ENCABEZADO CON FILTROS -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard Gerencial & Analítica</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Visualizando datos: <span id="periodo-texto" class="font-bold">Última Semana</span></p>
+        </div>
+        
+        <div class="flex items-center gap-3 mt-4 md:mt-0">
+            <!-- Selector de Período -->
+            <div class="relative">
+                <select id="filtro-periodo" onchange="cambiarPeriodo(this.value)" 
+                    class="block appearance-none w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-blue-500">
+                    <option value="semana" selected>Última Semana</option>
+                    <option value="hoy">Hoy</option>
+                    <option value="mes">Último Mes</option>
+                    <option value="anio">Último Año</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
+
+            <!-- Botón Reset -->
+            <button onclick="resetFiltros()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded inline-flex items-center transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- 1. KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border-l-4 border-red-500 shadow-lg transition-all hover:shadow-xl">
+            <div class="flex justify-between items-center">
+                <div><p class="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase">Pendientes</p><h2 id="kpi-pendientes" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">...</h2></div>
+                <div class="p-3 bg-red-100 text-red-600 rounded-full"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border-l-4 border-yellow-500 shadow-lg transition-all hover:shadow-xl">
+            <div class="flex justify-between items-center">
+                <div><p class="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase">En Ejecución</p><h2 id="kpi-proceso" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">...</h2></div>
+                <div class="p-3 bg-yellow-100 text-yellow-600 rounded-full"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+            </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border-l-4 border-green-500 shadow-lg transition-all hover:shadow-xl">
+            <div class="flex justify-between items-center">
+                <div><p class="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase">Terminadas</p><h2 id="kpi-terminadas" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">...</h2></div>
+                <div class="p-3 bg-green-100 text-green-600 rounded-full"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. FILA DE GRÁFICOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Gráfico 1: Tendencia -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
+            <!-- Loader superpuesto -->
+            <div id="loader-tendencia" class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex items-center justify-center z-10 hidden">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">📈 Demanda y Predicción (IA)</h3>
+            <div class="relative h-64 w-full">
+                <canvas id="chartTendencia"></canvas>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">* La línea punteada representa la proyección basada en regresión lineal.</p>
+        </div>
+
+        <!-- Gráfico 2: Productividad -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
+             <div id="loader-prod" class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex items-center justify-center z-10 hidden">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">🏆 Productividad Técnica</h3>
+            <div class="relative h-64 w-full">
+                <canvas id="chartProductividad"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. TABLA HISTORIAL -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h2 class="text-base font-semibold leading-7 text-gray-900 dark:text-white">Últimas Órdenes Cerradas</h2>
+            <span class="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">En este período</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full whitespace-nowrap text-left text-sm text-gray-500 dark:text-gray-400">
+                <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase font-semibold">
+                    <tr>
+                        <th class="px-6 py-3">ID</th>
+                        <th class="px-6 py-3">Técnico</th>
+                        <th class="px-6 py-3">Cliente</th>
+                        <th class="px-6 py-3 text-right">Fecha Cierre</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-historial" class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr><td colspan="4" class="text-center py-4">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content_main %}
+
+{% block javascript %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Variables globales para las instancias de los gráficos (para poder destruirlos y redibujarlos)
+let chartTendenciaInstance = null;
+let chartProductividadInstance = null;
+
+document.addEventListener("DOMContentLoaded", function() {
+    cargarEstadisticas('semana'); // Carga inicial
+});
+
+// Función para cambiar el período desde el select
+function cambiarPeriodo(periodo) {
+    const textos = {
+        'hoy': 'Hoy',
+        'semana': 'Última Semana',
+        'mes': 'Último Mes',
+        'anio': 'Último Año'
+    };
+    document.getElementById('periodo-texto').innerText = textos[periodo];
+    cargarEstadisticas(periodo);
+}
+
+// Función para resetear a la vista por defecto
+function resetFiltros() {
+    document.getElementById('filtro-periodo').value = 'semana';
+    cambiarPeriodo('semana');
+}
+
+// Función helper para determinar la URL base (corrige error en previsualizadores con blob:)
+function getApiUrl(endpoint) {
+    const { protocol } = window.location;
+    // Si estamos en un entorno blob o file (como la vista previa), forzamos localhost
+    if (protocol === 'blob:' || protocol === 'file:') {
+        return `http://127.0.0.1:8000${endpoint}`;
+    }
+    // En entorno normal, usamos ruta relativa
+    return endpoint;
+}
+
+async function cargarEstadisticas(periodo) {
+    // Mostrar loaders
+    document.getElementById('loader-tendencia').classList.remove('hidden');
+    document.getElementById('loader-prod').classList.remove('hidden');
+
+    try {
+        // Usamos la función helper para construir la URL segura
+        const url = getApiUrl(`/api/v1/dashboard-stats/?periodo=${periodo}`);
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Error en API');
+        const data = await response.json();
+
+        // 1. KPIs
+        // Efecto de conteo animado simple
+        animarNumero('kpi-pendientes', data.kpis.pendientes);
+        animarNumero('kpi-proceso', data.kpis.en_proceso);
+        animarNumero('kpi-terminadas', data.kpis.terminadas);
+
+        // 2. Gráfico Tendencia
+        const ctxTendencia = document.getElementById('chartTendencia');
+        if (chartTendenciaInstance) chartTendenciaInstance.destroy(); // Limpiar anterior
+
+        chartTendenciaInstance = new Chart(ctxTendencia, {
+            type: 'line',
+            data: {
+                labels: data.grafico_tendencia.fechas,
+                datasets: [
+                    {
+                        label: 'Demanda Real',
+                        data: data.grafico_tendencia.real,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Predicción',
+                        data: data.grafico_tendencia.prediccion,
+                        borderColor: '#10b981',
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        pointRadius: 0 // Ocultar puntos para que se vea más limpio
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#9ca3af' } } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', stepSize: 1 } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // 3. Gráfico Productividad
+        const ctxProd = document.getElementById('chartProductividad');
+        if (chartProductividadInstance) chartProductividadInstance.destroy();
+
+        chartProductividadInstance = new Chart(ctxProd, {
+            type: 'bar',
+            data: {
+                labels: data.grafico_tecnicos.categorias,
+                datasets: [{
+                    label: 'Órdenes Terminadas',
+                    data: data.grafico_tecnicos.valores,
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', stepSize: 1 } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                }
+            }
+        });
+
+        // 4. Tabla Historial
+        const tbody = document.getElementById('tabla-historial');
+        tbody.innerHTML = '';
+        if (data.historial.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">No hay datos en este período.</td></tr>';
+        } else {
+            data.historial.forEach(item => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">#${item.id}</td>
+                        <td class="px-6 py-4">${item.tecnico}</td>
+                        <td class="px-6 py-4">${item.cliente}</td>
+                        <td class="px-6 py-4 text-right text-gray-400 text-xs">${item.fecha}</td>
+                    </tr>
+                `;
+            });
+        }
+
+    } catch (error) {
+        console.error("Error cargando estadísticas:", error);
+    } finally {
+        // Ocultar loaders
+        document.getElementById('loader-tendencia').classList.add('hidden');
+        document.getElementById('loader-prod').classList.add('hidden');
+    }
+}
+
+// Función auxiliar para animar números
+function animarNumero(id, valorFinal) {
+    const elemento = document.getElementById(id);
+    const valorInicial = parseInt(elemento.innerText) || 0;
+    if (valorInicial === valorFinal) return;
+    
+    let startTimestamp = null;
+    const duration = 1000; // 1 segundo
+
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        elemento.innerText = Math.floor(progress * (valorFinal - valorInicial) + valorInicial);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            elemento.innerText = valorFinal;
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+</script>
+{% endblock javascript %}
