@@ -1,8 +1,15 @@
-{% load static %}  
+{% load static %}
 
-<div class="flex grow flex-col gap-y-5 overflow-y-auto  bg-gray-900 text-gray-500 px-6 pb-4">
-  <div class="flex h-16 shrink-0 items-center">
-    <img class="h-14 w-auto mt-4" src="{% static "img/logo.svg" %}" alt="mejor niñez">
+<div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white border-r border-slate-200 px-6 pb-4 h-full">
+  
+  <div class="flex h-16 shrink-0 items-center mt-2 mb-4">
+    <div class="flex items-center gap-2 font-bold text-slate-900 text-xl tracking-tight">
+        <div class="bg-blue-600 p-1.5 rounded-lg shadow-sm">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        </div>
+        INTERCATV
+    </div>
   </div>
+
   {% include "components/navbar/nav.html" %}
 </div>

@@ -1,35 +1,23 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Técnico</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <style>
-        /* Estilo simple para el body simulando un celular */
-        body {
-            background-color: #f3f4f6; /* gris claro */
-        }
-        /* Modo oscuro para el simulador */
-        .dark body {
-            background-color: #111827; /* gris oscuro */
-        }
-    </style>
-</head>
-<body class="dark"> <div class="max-w-md mx-auto min-h-screen bg-white dark:bg-gray-900 shadow-xl">
-        <header class="bg-gray-800 p-4 shadow-md sticky top-0 z-10">
-            <div class="flex justify-between items-center">
-                <h1 class="text-xl font-bold text-white">Mis Órdenes de Trabajo</h1>
-                <a href="{% url 'account_logout' %}" class="text-sm text-red-400 hover:text-red-300">Salir</a>
-            </div>
-        </header>
+{% extends 'components/Layout/base_extendido.html' %}
+{% load static %} 
+{% load tailwind_filters %}
 
-        <main id="lista-mis-ordenes" class="p-4 space-y-4">
-            <p class="text-center text-gray-400 py-10">Cargando órdenes...</p>
-        </main>
+{% block head_title %}
+  Registrar Usuario
+{% endblock head_title %}
+
+{% block content_main %} 
+
+
+
+    <div class="bg-gray-800 p-4 shadow-md sticky top-0 z-10">
+        <h1 class="text-xl font-bold text-white text-center">Mis Órdenes de Trabajo</h1>
     </div>
 
+    <div id="lista-mis-ordenes" class="p-4 space-y-4">
+        <p class="text-center text-gray-400 py-10">Cargando órdenes...</p>
+    </div>
+   
     <script>
         // --- Helper CSRF ---
         function getCookie(name) {
@@ -166,5 +154,7 @@
 
         document.addEventListener('DOMContentLoaded', loadMyOrders);
     </script>
-</body>
-</html>
+
+  {% include 'components/mensajes.html' %}  
+
+{% endblock content_main %}

@@ -3,105 +3,112 @@
 {% load humanize %}
 
 {% block content_main %} 
-<div class="min-h-screen px-4 py-6">
+<div class="min-h-screen px-4 py-8">
     
-    <!-- ENCABEZADO CON FILTROS -->
-    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard Gerencial & Analítica</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Visualizando datos: <span id="periodo-texto" class="font-bold">Última Semana</span></p>
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Gerencial & Analítica</h1>
+            <p class="text-sm text-slate-500 mt-1">Visualizando datos del período: <span id="periodo-texto" class="font-semibold text-slate-700">Última Semana</span></p>
         </div>
         
-        <div class="flex items-center gap-3 mt-4 md:mt-0">
-            <!-- Selector de Período -->
-            <div class="relative">
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="relative w-full md:w-64">
                 <select id="filtro-periodo" onchange="cambiarPeriodo(this.value)" 
-                    class="block appearance-none w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-blue-500">
+                    class="block appearance-none w-full bg-white border border-slate-300 text-slate-700 py-2.5 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all font-medium text-sm cursor-pointer hover:border-slate-400">
                     <option value="semana" selected>Última Semana</option>
                     <option value="hoy">Hoy</option>
                     <option value="mes">Último Mes</option>
                     <option value="anio">Último Año</option>
                 </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
             </div>
 
-            <!-- Botón Reset -->
-            <button onclick="resetFiltros()" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-4 rounded inline-flex items-center transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <button onclick="resetFiltros()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-lg inline-flex items-center transition-all border border-slate-200 shadow-sm text-sm whitespace-nowrap">
+                <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Reset
             </button>
         </div>
     </div>
 
-    <!-- 1. KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border-l-4 border-red-500 shadow-lg transition-all hover:shadow-xl">
+        <div class="bg-white rounded-xl p-6 border-l-4 border-red-500 shadow-sm hover:shadow-md transition-all border-t border-r border-b border-slate-200">
             <div class="flex justify-between items-center">
-                <div><p class="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase">Pendientes</p><h2 id="kpi-pendientes" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">...</h2></div>
-                <div class="p-3 bg-red-100 text-red-600 rounded-full"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                <div>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Pendientes</p>
+                    <h2 id="kpi-pendientes" class="text-4xl font-bold text-slate-900 mt-2">...</h2>
+                </div>
+                <div class="p-3 bg-red-50 text-red-600 rounded-xl border border-red-100">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
             </div>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border-l-4 border-yellow-500 shadow-lg transition-all hover:shadow-xl">
+        <div class="bg-white rounded-xl p-6 border-l-4 border-yellow-500 shadow-sm hover:shadow-md transition-all border-t border-r border-b border-slate-200">
             <div class="flex justify-between items-center">
-                <div><p class="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase">En Ejecución</p><h2 id="kpi-proceso" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">...</h2></div>
-                <div class="p-3 bg-yellow-100 text-yellow-600 rounded-full"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                <div>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">En Ejecución</p>
+                    <h2 id="kpi-proceso" class="text-4xl font-bold text-slate-900 mt-2">...</h2>
+                </div>
+                <div class="p-3 bg-yellow-50 text-yellow-600 rounded-xl border border-yellow-100">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
             </div>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border-l-4 border-green-500 shadow-lg transition-all hover:shadow-xl">
+        <div class="bg-white rounded-xl p-6 border-l-4 border-green-500 shadow-sm hover:shadow-md transition-all border-t border-r border-b border-slate-200">
             <div class="flex justify-between items-center">
-                <div><p class="text-gray-500 dark:text-gray-400 text-sm font-bold uppercase">Terminadas</p><h2 id="kpi-terminadas" class="text-4xl font-bold text-gray-800 dark:text-white mt-2">...</h2></div>
-                <div class="p-3 bg-green-100 text-green-600 rounded-full"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                <div>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Terminadas</p>
+                    <h2 id="kpi-terminadas" class="text-4xl font-bold text-slate-900 mt-2">...</h2>
+                </div>
+                <div class="p-3 bg-green-50 text-green-600 rounded-xl border border-green-100">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. FILA DE GRÁFICOS -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <!-- Gráfico 1: Tendencia -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
-            <!-- Loader superpuesto -->
-            <div id="loader-tendencia" class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex items-center justify-center z-10 hidden">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative hover:shadow-md transition-shadow">
+            <div id="loader-tendencia" class="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10 hidden rounded-xl">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             </div>
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">📈 Demanda y Predicción (IA)</h3>
-            <div class="relative h-64 w-full">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">📈 Demanda y Predicción (IA)</h3>
+            <p class="text-sm text-slate-500 mb-6">Comparativa de flujo real vs. estimación por algoritmo.</p>
+            <div class="relative h-72 w-full">
                 <canvas id="chartTendencia"></canvas>
             </div>
-            <p class="text-xs text-gray-400 mt-2">* La línea punteada representa la proyección basada en regresión lineal.</p>
         </div>
 
-        <!-- Gráfico 2: Productividad -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 relative">
-             <div id="loader-prod" class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 flex items-center justify-center z-10 hidden">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative hover:shadow-md transition-shadow">
+             <div id="loader-prod" class="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10 hidden rounded-xl">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
             </div>
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">🏆 Productividad Técnica</h3>
-            <div class="relative h-64 w-full">
+            <h3 class="text-lg font-bold text-slate-900 mb-1">🏆 Productividad Técnica</h3>
+            <p class="text-sm text-slate-500 mb-6">Ranking por órdenes terminadas en el período.</p>
+            <div class="relative h-72 w-full">
                 <canvas id="chartProductividad"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- 3. TABLA HISTORIAL -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 class="text-base font-semibold leading-7 text-gray-900 dark:text-white">Últimas Órdenes Cerradas</h2>
-            <span class="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">En este período</span>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+        <div class="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+            <h2 class="text-base font-bold leading-7 text-slate-900">Últimas Órdenes Cerradas</h2>
+            <span class="text-xs font-medium text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-sm">En este período</span>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full whitespace-nowrap text-left text-sm text-gray-500 dark:text-gray-400">
-                <thead class="bg-gray-50 dark:bg-gray-700 text-xs uppercase font-semibold">
+            <table class="w-full whitespace-nowrap text-left text-sm text-slate-600">
+                <thead class="bg-white text-xs uppercase font-bold text-slate-400 border-b border-slate-100">
                     <tr>
-                        <th class="px-6 py-3">ID</th>
-                        <th class="px-6 py-3">Técnico</th>
-                        <th class="px-6 py-3">Cliente</th>
-                        <th class="px-6 py-3 text-right">Fecha Cierre</th>
+                        <th class="px-6 py-4 tracking-wider">ID</th>
+                        <th class="px-6 py-4 tracking-wider">Técnico</th>
+                        <th class="px-6 py-4 tracking-wider">Cliente</th>
+                        <th class="px-6 py-4 text-right tracking-wider">Fecha Cierre</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-historial" class="divide-y divide-gray-200 dark:divide-gray-700">
-                    <tr><td colspan="4" class="text-center py-4">Cargando...</td></tr>
+                <tbody id="tabla-historial" class="divide-y divide-slate-100 bg-white">
+                    <tr><td colspan="4" class="text-center py-6 text-slate-400 font-medium">Cargando datos...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -113,7 +120,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// Variables globales para las instancias de los gráficos (para poder destruirlos y redibujarlos)
+// --- Variables Globales ---
 let chartTendenciaInstance = null;
 let chartProductividadInstance = null;
 
@@ -121,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function() {
     cargarEstadisticas('semana'); // Carga inicial
 });
 
-// Función para cambiar el período desde el select
+// --- Funciones de Filtro ---
 function cambiarPeriodo(periodo) {
     const textos = {
         'hoy': 'Hoy',
@@ -133,45 +140,52 @@ function cambiarPeriodo(periodo) {
     cargarEstadisticas(periodo);
 }
 
-// Función para resetear a la vista por defecto
 function resetFiltros() {
     document.getElementById('filtro-periodo').value = 'semana';
     cambiarPeriodo('semana');
 }
 
-// Función helper para determinar la URL base (corrige error en previsualizadores con blob:)
+// Helper URL para entornos locales/dev
 function getApiUrl(endpoint) {
     const { protocol } = window.location;
-    // Si estamos en un entorno blob o file (como la vista previa), forzamos localhost
     if (protocol === 'blob:' || protocol === 'file:') {
         return `http://127.0.0.1:8000${endpoint}`;
     }
-    // En entorno normal, usamos ruta relativa
     return endpoint;
 }
 
+// --- LÓGICA PRINCIPAL DE CARGA ---
 async function cargarEstadisticas(periodo) {
-    // Mostrar loaders
+    // Mostrar Loaders
     document.getElementById('loader-tendencia').classList.remove('hidden');
     document.getElementById('loader-prod').classList.remove('hidden');
 
     try {
-        // Usamos la función helper para construir la URL segura
         const url = getApiUrl(`/api/v1/dashboard-stats/?periodo=${periodo}`);
-        
         const response = await fetch(url);
         if (!response.ok) throw new Error('Error en API');
         const data = await response.json();
 
-        // 1. KPIs
-        // Efecto de conteo animado simple
+        // 1. Actualizar KPIs con animación
         animarNumero('kpi-pendientes', data.kpis.pendientes);
         animarNumero('kpi-proceso', data.kpis.en_proceso);
         animarNumero('kpi-terminadas', data.kpis.terminadas);
 
-        // 2. Gráfico Tendencia
-        const ctxTendencia = document.getElementById('chartTendencia');
-        if (chartTendenciaInstance) chartTendenciaInstance.destroy(); // Limpiar anterior
+        // Configuración de Colores Chart.js (Modo Light)
+        const textColor = '#64748b'; // slate-500
+        const gridColor = '#f1f5f9'; // slate-100
+
+        // ============================================================
+        // 2. Gráfico Tendencia: CONFIGURACIÓN PREMIUM (IA vs Real)
+        // ============================================================
+        const ctxTendencia = document.getElementById('chartTendencia').getContext('2d');
+
+        // Efecto Degradado (Gradient) para datos reales
+        let gradientReal = ctxTendencia.createLinearGradient(0, 0, 0, 400);
+        gradientReal.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // Azul suave arriba
+        gradientReal.addColorStop(1, 'rgba(37, 99, 235, 0.0)'); // Transparente abajo
+
+        if (chartTendenciaInstance) chartTendenciaInstance.destroy();
 
         chartTendenciaInstance = new Chart(ctxTendencia, {
             type: 'line',
@@ -181,33 +195,87 @@ async function cargarEstadisticas(periodo) {
                     {
                         label: 'Demanda Real',
                         data: data.grafico_tendencia.real,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: '#2563eb', // Blue-600
+                        backgroundColor: gradientReal,
+                        borderWidth: 3,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#2563eb',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        order: 1 // Capa superior
                     },
                     {
-                        label: 'Predicción',
+                        label: 'Predicción IA',
                         data: data.grafico_tendencia.prediccion,
-                        borderColor: '#10b981',
-                        borderDash: [5, 5],
+                        borderColor: '#10b981', // Emerald-500
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        borderDash: [8, 5], // Línea punteada
                         tension: 0.4,
-                        pointRadius: 0 // Ocultar puntos para que se vea más limpio
+                        pointStyle: 'rectRot', // Rombo distintivo
+                        pointRadius: 5,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        order: 0 // Capa inferior
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: '#9ca3af' } } },
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: { 
+                    legend: { 
+                        labels: { 
+                            color: textColor,
+                            usePointStyle: true,
+                            font: { family: "'Inter', sans-serif", weight: '600' },
+                            padding: 20
+                        },
+                        position: 'top',
+                        align: 'end'
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)', // Slate-900
+                        titleColor: '#f8fafc',
+                        bodyColor: '#f8fafc',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) label += context.parsed.y;
+                                return label;
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', stepSize: 1 } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: gridColor, borderDash: [5, 5] }, 
+                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10 } 
+                    },
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10 } 
+                    }
                 }
             }
         });
 
+        // ============================================================
         // 3. Gráfico Productividad
+        // ============================================================
         const ctxProd = document.getElementById('chartProductividad');
         if (chartProductividadInstance) chartProductividadInstance.destroy();
 
@@ -218,34 +286,54 @@ async function cargarEstadisticas(periodo) {
                 datasets: [{
                     label: 'Órdenes Terminadas',
                     data: data.grafico_tecnicos.valores,
-                    backgroundColor: '#8b5cf6',
-                    borderRadius: 5
+                    backgroundColor: '#7c3aed', // Violet-600
+                    hoverBackgroundColor: '#6d28d9',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    barThickness: 'flex',
+                    maxBarThickness: 40
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#f8fafc',
+                        padding: 12,
+                        cornerRadius: 8
+                    }
+                },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', stepSize: 1 } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    y: { 
+                        beginAtZero: true, 
+                        grid: { color: gridColor, drawBorder: false }, 
+                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10, stepSize: 1 } 
+                    },
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10 } 
+                    }
                 }
             }
         });
 
-        // 4. Tabla Historial
+        // 4. Actualizar Tabla Historial
         const tbody = document.getElementById('tabla-historial');
         tbody.innerHTML = '';
         if (data.historial.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">No hay datos en este período.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-400 font-medium">No hay datos recientes.</td></tr>';
         } else {
             data.historial.forEach(item => {
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700">
-                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">#${item.id}</td>
-                        <td class="px-6 py-4">${item.tecnico}</td>
-                        <td class="px-6 py-4">${item.cliente}</td>
-                        <td class="px-6 py-4 text-right text-gray-400 text-xs">${item.fecha}</td>
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                        <td class="px-6 py-4 font-bold text-blue-600">#${item.id}</td>
+                        <td class="px-6 py-4 font-medium text-slate-800">${item.tecnico}</td>
+                        <td class="px-6 py-4 text-slate-600">${item.cliente}</td>
+                        <td class="px-6 py-4 text-right text-slate-500 text-xs font-medium">${item.fecha}</td>
                     </tr>
                 `;
             });
@@ -254,20 +342,20 @@ async function cargarEstadisticas(periodo) {
     } catch (error) {
         console.error("Error cargando estadísticas:", error);
     } finally {
-        // Ocultar loaders
+        // Ocultar Loaders
         document.getElementById('loader-tendencia').classList.add('hidden');
         document.getElementById('loader-prod').classList.add('hidden');
     }
 }
 
-// Función auxiliar para animar números
+// Función auxiliar: Animación de conteo
 function animarNumero(id, valorFinal) {
     const elemento = document.getElementById(id);
     const valorInicial = parseInt(elemento.innerText) || 0;
     if (valorInicial === valorFinal) return;
     
     let startTimestamp = null;
-    const duration = 1000; // 1 segundo
+    const duration = 1000;
 
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
@@ -281,6 +369,5 @@ function animarNumero(id, valorFinal) {
     };
     window.requestAnimationFrame(step);
 }
-
 </script>
 {% endblock javascript %}

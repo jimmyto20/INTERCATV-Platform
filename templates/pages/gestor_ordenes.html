@@ -1,93 +1,114 @@
 {% extends 'components/Layout/base_extendido.html' %}
 {% load static %}
 
-
 {% block content_main %}
 <div class="container mx-auto px-4 py-6 h-full flex flex-col space-y-6">
 
-    <div class="mb-4 flex flex-col md:flex-row justify-between items-start">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
+            <h1 class="text-2xl font-bold text-slate-900">
                 Centro de Control Operativo
             </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Monitoreo de Flota y Asignaciones (Google Maps)</p>
+            <p class="text-sm text-slate-500">Monitoreo de Flota y Asignaciones en Tiempo Real</p>
         </div>
         
         <button id="emergency-button" onclick="toggleEmergencyMode()"
-            class="mt-2 md:mt-0 px-4 py-2 rounded-lg font-semibold text-white bg-gray-500 hover:bg-gray-600 transition-colors duration-200">
+            class="px-5 py-2.5 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-all duration-200 border border-blue-700 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             Cargar Estado...
         </button>
     </div>
 
-    <div id="emergency-banner" class="hidden p-4 text-center text-white bg-red-600 rounded-lg shadow-lg">
-        <strong class="font-bold">🚨 ¡MODO DE EMERGENCIA ACTIVADO! 🚨</strong>
-        <p id="emergency-banner-message">El chatbot está informando a los clientes de una falla masiva.</p>
+    <div id="emergency-banner" class="hidden p-4 text-center text-white bg-red-600 rounded-lg shadow-md animate-pulse border border-red-700">
+        <strong class="font-bold text-lg">🚨 ¡MODO DE EMERGENCIA ACTIVADO! 🚨</strong>
+        <p id="emergency-banner-message" class="text-sm mt-1 font-medium">El sistema está notificando demoras a los clientes.</p>
     </div>
 
-    <div class="rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 relative z-0">
-        <div id="map" style="width: 100%; height: 400px; background-color: #e5e7eb;"></div>
+    <div class="w-full bg-white p-1 rounded-xl shadow-sm border border-slate-200">
+        <div id="map" style="width: 100%; height: 400px; border-radius: 0.75rem; background-color: #f1f5f9;"></div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="flex flex-col bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 rounded-t-xl flex justify-between items-center">
-                <h2 class="font-bold text-gray-700 dark:text-gray-200">🔴 Pendientes</h2>
-                <span id="badge-pendientes" class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">0</span>
+        
+        <div class="flex flex-col bg-slate-50 rounded-xl border border-slate-200 shadow-sm h-[600px]">
+            <div class="p-3 border-b border-slate-200 bg-white rounded-t-xl flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-red-100"></div>
+                    <h2 class="font-bold text-slate-700">Pendientes</h2>
+                </div>
+                <span id="badge-pendientes" class="bg-white text-slate-700 text-xs font-bold px-2 py-1 rounded-full border border-slate-200 shadow-sm">0</span>
             </div>
-            <div id="col-pendientes" class="p-4 space-y-3 overflow-y-auto max-h-[500px]">
-                <p class="text-center text-gray-400 text-sm py-4">Cargando...</p>
-            </div>
-        </div>
-        <div class="flex flex-col bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 rounded-t-xl flex justify-between items-center">
-                <h2 class="font-bold text-gray-700 dark:text-gray-200">🟡 Asignadas</h2>
-                <span id="badge-asignadas" class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">0</span>
-            </div>
-            <div id="col-asignadas" class="p-4 space-y-3 overflow-y-auto max-h-[500px]">
-                <p class="text-center text-gray-400 text-sm py-4">Cargando...</p>
+            <div id="col-pendientes" class="p-4 space-y-3 overflow-y-auto flex-1">
+                <p class="text-center text-slate-400 text-sm py-4">Cargando...</p>
             </div>
         </div>
-        <div class="flex flex-col bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 rounded-t-xl flex justify-between items-center">
-                <h2 class="font-bold text-gray-700 dark:text-gray-200">🟢 En Ejecución</h2>
-                <span id="badge-ejecucion" class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">0</span>
+
+        <div class="flex flex-col bg-slate-50 rounded-xl border border-slate-200 shadow-sm h-[600px]">
+            <div class="p-3 border-b border-slate-200 bg-white rounded-t-xl flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-yellow-500 ring-2 ring-yellow-100"></div>
+                    <h2 class="font-bold text-slate-700">Asignadas</h2>
+                </div>
+                <span id="badge-asignadas" class="bg-white text-slate-700 text-xs font-bold px-2 py-1 rounded-full border border-slate-200 shadow-sm">0</span>
             </div>
-            <div id="col-ejecucion" class="p-4 space-y-3 overflow-y-auto max-h-[500px]">
-                <p class="text-center text-gray-400 text-sm py-4">Cargando...</p>
+            <div id="col-asignadas" class="p-4 space-y-3 overflow-y-auto flex-1">
+                <p class="text-center text-slate-400 text-sm py-4">Cargando...</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col bg-slate-50 rounded-xl border border-slate-200 shadow-sm h-[600px]">
+            <div class="p-3 border-b border-slate-200 bg-white rounded-t-xl flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-green-100"></div>
+                    <h2 class="font-bold text-slate-700">En Ejecución</h2>
+                </div>
+                <span id="badge-ejecucion" class="bg-white text-slate-700 text-xs font-bold px-2 py-1 rounded-full border border-slate-200 shadow-sm">0</span>
+            </div>
+            <div id="col-ejecucion" class="p-4 space-y-3 overflow-y-auto flex-1">
+                <p class="text-center text-slate-400 text-sm py-4">Cargando...</p>
             </div>
         </div>
     </div>
     
-    <div class="flex flex-col bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 class="font-bold text-gray-900 dark:text-white">👥 Estado de Flota</h2>
-            <span id="badge-tecnicos" class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">0</span>
+    <div class="flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm mt-6 mb-6">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl">
+            <h2 class="font-bold text-slate-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Estado de Flota
+            </h2>
+            <span id="badge-tecnicos" class="bg-white text-slate-600 text-xs font-bold px-3 py-1 rounded-full border border-slate-200 shadow-sm">0</span>
         </div>
-        <div id="col-tecnicos" class="p-2 overflow-y-auto max-h-[400px] divide-y divide-gray-200 dark:divide-gray-700">
-            <p class="text-center text-gray-400 text-sm py-4">Cargando flota...</p>
+        <div id="col-tecnicos" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-h-[250px] overflow-y-auto">
+            <p class="text-center text-slate-400 text-sm py-4 col-span-full">Cargando flota...</p>
         </div>
     </div>
 
-    <div id="protocol-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl">
-            <div class="flex items-center justify-between p-4 border-b dark:border-gray-700">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Protocolo de Emergencia (ITIL)</h3>
-                <button onclick="closeProtocolModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">&times;</button>
+    <div id="protocol-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl border border-slate-200 transform transition-all scale-100">
+            <div class="flex items-center justify-between p-5 border-b border-slate-100">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <span class="text-2xl">🚨</span> Protocolo de Emergencia (ITIL)
+                </h3>
+                <button onclick="closeProtocolModal()" class="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-            <div class="p-6 text-gray-700 dark:text-gray-300">
-                <h4 class="font-bold text-lg mb-2">Protocolo: CORTE MASIVO DE FIBRA</h4>
-                <ol class="list-decimal list-inside space-y-2">
-                    <li>Activar el Modo Emergencia en el Dashboard (¡Hecho!).</li>
-                    <li>Informar al supervisor de área (Marcelo Polanco) sobre la zona afectada.</li>
-                    <li>Detener asignaciones de instalaciones nuevas (priorizar corte).</li>
-                    <li>Asignar TODOS los técnicos disponibles de la zona afectada a la emergencia.</li>
-                    <li>Monitorear la columna "En Ejecución" y el mapa.</li>
-                    <li>Desactivar el Modo Emergencia solo cuando el supervisor confirme la restauración del servicio.</li>
+            <div class="p-6 text-slate-600 space-y-4">
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                    <h4 class="font-bold text-red-700 text-sm uppercase tracking-wide">Acción Requerida: Corte Masivo</h4>
+                    <p class="text-xs text-red-600 mt-1">Este protocolo activa alertas automáticas en la APP de Clientes.</p>
+                </div>
+                <ol class="list-decimal list-inside space-y-3 text-sm font-medium text-slate-700">
+                    <li>Se ha activado el <strong class="text-red-600">Modo Emergencia</strong> en el Dashboard.</li>
+                    <li>Informar al supervisor de área inmediatamente.</li>
+                    <li>Detener asignaciones de instalaciones nuevas.</li>
+                    <li>Asignar TODOS los técnicos disponibles de la zona a la emergencia.</li>
+                    <li>Desactivar el Modo Emergencia solo tras confirmación de NOC.</li>
                 </ol>
             </div>
-            <div class="flex items-center justify-end p-4 bg-gray-50 dark:bg-gray-900 border-t dark:border-gray-700 rounded-b-lg">
-                <button type="button" onclick="closeProtocolModal()" class="px-4 py-2 bg-blue-600 rounded-md text-sm font-medium text-white hover:bg-blue-700">
-                    Entendido
+            <div class="flex items-center justify-end p-4 bg-slate-50 border-t border-slate-100 rounded-b-xl">
+                <button type="button" onclick="closeProtocolModal()" class="px-6 py-2.5 bg-slate-900 rounded-lg text-sm font-bold text-white hover:bg-black shadow-lg hover:shadow-xl transition-all">
+                    Entendido, aplicar protocolo
                 </button>
             </div>
         </div>
@@ -98,16 +119,16 @@
 
 {% block javascript %}
 <script>
-    // --- Variables Globales ---
+    // --- 1. CONFIGURACIÓN Y VARIABLES ---
     let map;
     let markers = {}; 
     let allTechnicians = [];
     let SystemState = { is_emergency: false }; 
     
-    // --- Elementos del DOM (se asignan en DOMContentLoaded) ---
+    // Referencias DOM
     let emergencyButton, emergencyBanner, emergencyBannerMessage, protocolModal;
 
-    // --- CSRF TOKEN ---
+    // Obtener CSRF Token de Django
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -124,36 +145,56 @@
     }
     const csrftoken = getCookie('csrftoken');
 
-    // --- GOOGLE MAPS ---
+    // --- 2. GOOGLE MAPS INIT ---
     window.initMap = function() {
+        console.log("Iniciando Google Maps...");
         const chillan = { lat: -36.6066, lng: -72.1036 };
         try {
+            // Estilo visual "Silver/Light" limpio
             map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 10, center: chillan, mapTypeControl: false, streetViewControl: false
+                zoom: 12, 
+                center: chillan, 
+                mapTypeControl: false, 
+                streetViewControl: false,
+                fullscreenControl: true,
+                styles: [
+                    { "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] },
+                    { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
+                    { "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
+                    { "elementType": "labels.text.stroke", "stylers": [{ "color": "#f5f5f5" }] },
+                    { "featureType": "administrative.land_parcel", "elementType": "labels.text.fill", "stylers": [{ "color": "#bdbdbd" }] },
+                    { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#eeeeee" }] },
+                    { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                    { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#ffffff" }] },
+                    { "featureType": "road.arterial", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                    { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#dadada" }] },
+                    { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
+                    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#e9e9e9" }] },
+                    { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] }
+                ]
             });
             
-            // --- ¡CORRECCIÓN! ---
-            // Llamamos a la carga de datos tan pronto como el mapa está listo.
+            // Cargar datos apenas el mapa esté listo
             loadKanbanBoard(); 
             
         } catch (e) {
-            console.error("Error al iniciar Google Maps. Revisa tu API Key.", e);
-            document.getElementById("map").innerText = "Error al cargar Google Maps. Revisa la consola (F12) y tu API Key.";
+            console.error("Error crítico al iniciar Mapa:", e);
+            document.getElementById("map").innerHTML = '<div class="flex items-center justify-center h-full text-red-500 font-bold bg-red-50">Error API Google Maps. Revisa la consola.</div>';
         }
     }
 
-    // --- FUNCIÓN DE MAPA (LA QUE FALTABA) ---
+    // --- 3. MARCADORES DEL MAPA ---
     function updateMapMarkers(technicians) {
-        // Limpiar marcadores de técnicos que ya NO están disponibles
+        // 1. Eliminar marcadores antiguos
         Object.keys(markers).forEach(tecId => {
             const isStillAvailable = technicians.some(tec => tec.id == tecId);
             if (!isStillAvailable && markers[tecId]) {
-                markers[tecId].setMap(null); // Quitar del mapa
+                markers[tecId].setMap(null);
                 delete markers[tecId];
             }
         });
 
-        // Añadir o mover marcadores de técnicos disponibles
+        // 2. Crear/Actualizar nuevos
         technicians.forEach(tec => {
             if (tec.ubicacion_actual) {
                 try {
@@ -161,64 +202,78 @@
                     const position = { lat: parseFloat(latStr), lng: parseFloat(lngStr) };
                     
                     if (markers[tec.id]) {
+                        // Solo mover si ya existe
                         markers[tec.id].setPosition(position);
                     } else {
+                        // Crear nuevo marcador
                         const marker = new google.maps.Marker({
-                            position: position, map: map, title: tec.nombre,
-                            animation: google.maps.Animation.DROP
+                            position: position, 
+                            map: map, 
+                            title: tec.nombre,
+                            // Icono personalizado simple (opcional, por defecto usa el pin rojo)
                         });
+                        
+                        // InfoWindow estilo limpio
                         const infoWindow = new google.maps.InfoWindow({
-                            content: `<div style="color:black; padding:4px;"><strong>${tec.nombre}</strong><br><span style="font-size:12px; color:#555;">${tec.especialidad}</span></div>`
+                            content: `
+                                <div style="font-family:'Inter',sans-serif; padding:6px; min-width:150px;">
+                                    <strong style="color:#0f172a; font-size:14px;">${tec.nombre}</strong><br>
+                                    <div style="margin-top:4px; font-size:12px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px; display:inline-block;">
+                                        ${tec.especialidad}
+                                    </div>
+                                </div>`
                         });
+                        
                         marker.addListener("click", () => infoWindow.open(map, marker));
                         markers[tec.id] = marker;
                     }
-                } catch(e) { console.warn("Coordenada inválida:", tec.nombre); }
+                } catch(e) { console.warn("Coordenada inválida para:", tec.nombre); }
             }
         });
     }
 
-    // --- KANBAN & TARJETAS ---
+    // --- 4. RENDERIZADO DE TARJETAS (CARD) ---
     function createOrderCard(orden, type) {
         const card = document.createElement('div');
-        card.className = 'bg-white dark:bg-gray-900 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow mb-3';
+        // Estilo Tarjeta: Blanca, borde sutil, sombra suave
+        card.className = 'bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-all mb-3 group relative';
         card.id = `orden-${orden.id}`;
-        // card.setAttribute('onclick', `openModal(${orden.id})`); // Descomentar si tienes el modal
 
-        let priorityColor = 'bg-gray-100 text-gray-800';
-        if(orden.prioridad === 'ALTA') priorityColor = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-        if(orden.prioridad === 'MEDIA') priorityColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-        if(orden.prioridad === 'BAJA') priorityColor = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        // Colores de prioridad más limpios
+        let priorityBadge = 'bg-slate-100 text-slate-600 border-slate-200';
+        if(orden.prioridad === 'ALTA') priorityBadge = 'bg-red-50 text-red-600 border-red-100';
+        if(orden.prioridad === 'MEDIA') priorityBadge = 'bg-amber-50 text-amber-600 border-amber-100';
+        if(orden.prioridad === 'BAJA') priorityBadge = 'bg-emerald-50 text-emerald-600 border-emerald-100';
 
         let contentHtml = `
             <div class="flex justify-between items-start mb-2">
-                <span class="text-xs font-bold text-gray-500 dark:text-gray-400">#${orden.id}</span>
-                <span class="text-xs font-bold px-2 py-0.5 rounded ${priorityColor}">${orden.prioridad}</span>
+                <span class="text-xs font-mono font-bold text-slate-400">#${orden.id}</span>
+                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${priorityBadge}">${orden.prioridad}</span>
             </div>
-            <h3 class="font-semibold text-gray-800 dark:text-gray-200 text-sm mb-1 truncate">${orden.cliente_detalle?.nombre || 'Cliente desconocido'}</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">${orden.descripcion}</p>
+            <h3 class="font-bold text-slate-800 text-sm mb-1 truncate leading-tight">${orden.cliente_detalle?.nombre || 'Cliente desconocido'}</h3>
+            <p class="text-xs text-slate-500 mb-3 line-clamp-2">${orden.descripcion}</p>
         `;
 
         if (type === 'PENDIENTE') {
-            let options = `<option value="">Asignar a...</option>`;
+            let options = `<option value="">Seleccionar Técnico...</option>`;
             allTechnicians.forEach(tec => {
                 options += `<option value="${tec.id}">${tec.nombre}</option>`;
             });
             contentHtml += `
                 <div class="mt-2" onclick="event.stopPropagation();">
                     <select onchange="assignTechnician(this, ${orden.id})" 
-                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                        class="w-full bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer hover:bg-slate-100 transition-colors">
                         ${options}
                     </select>
                 </div>
             `;
         } else {
             contentHtml += `
-                <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2">
-                    <div class="h-6 w-6 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-xs font-bold text-blue-600 dark:text-blue-300">
-                        ${orden.tecnico_detalle?.nombre.charAt(0) || 'T'}
+                <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+                    <div class="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700 border border-blue-200 shadow-sm">
+                        ${orden.tecnico_detalle?.nombre.charAt(0).toUpperCase() || 'T'}
                     </div>
-                    <span class="text-xs text-gray-600 dark:text-gray-300 truncate">${orden.tecnico_detalle?.nombre || 'Sin técnico'}</span>
+                    <span class="text-xs text-slate-600 truncate font-medium">${orden.tecnico_detalle?.nombre || 'Sin técnico'}</span>
                 </div>
             `;
         }
@@ -230,81 +285,91 @@
         const tecnicoId = select.value;
         if (!tecnicoId) return;
         const card = document.getElementById(`orden-${ordenId}`);
+        // Feedback visual inmediato
         card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+        
         try {
             const response = await fetch(`/api/v1/ordenes/${ordenId}/`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                 body: JSON.stringify({ tecnico: tecnicoId, estado: 'ASIGNADA' })
             });
-            if (response.ok) { loadKanbanBoard(); } else { alert("Error al asignar"); card.style.opacity = '1'; }
-        } catch (error) { console.error(error); card.style.opacity = '1'; }
+            if (response.ok) { 
+                loadKanbanBoard(); // Recargar todo si salió bien
+            } else { 
+                alert("Error al asignar orden. Intente nuevamente."); 
+                card.style.opacity = '1'; 
+                card.style.pointerEvents = 'auto';
+            }
+        } catch (error) { 
+            console.error(error); 
+            card.style.opacity = '1'; 
+            card.style.pointerEvents = 'auto';
+        }
     }
     
-    // --- ESTADO DE FLOTA ---
+    // --- 5. RENDERIZADO ESTADO FLOTA ---
     function loadTechnicianStatus() {
         const listContainer = document.getElementById('col-tecnicos');
         const badge = document.getElementById('badge-tecnicos');
-        if (!listContainer || !badge) {
-            console.warn("Elementos de flota no encontrados");
-            return;
-        }
+        if (!listContainer || !badge) return;
 
         fetch('/api/v1/tecnicos/?ordering=nombre') 
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
+            .then(res => res.json())
             .then(tecnicos => {
                 listContainer.innerHTML = ''; 
                 badge.innerText = tecnicos.length; 
 
                 if (tecnicos.length === 0) {
-                    listContainer.innerHTML = '<p class="text-center text-xs text-gray-400 mt-2">No hay técnicos registrados</p>';
+                    listContainer.innerHTML = '<p class="text-center text-xs text-slate-400 mt-2 col-span-full">No hay técnicos registrados</p>';
                     return;
                 }
                 tecnicos.forEach(tec => {
                     const isDisponible = tec.disponible;
-                    const statusColorClass = isDisponible 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-                    const statusText = isDisponible ? 'Disponible' : 'Ocupado';
+                    // Estilos de estado
+                    const statusClass = isDisponible 
+                        ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
+                        : 'bg-red-100 text-red-700 border-red-200';
+                    const statusDot = isDisponible ? 'bg-emerald-500' : 'bg-red-500';
+
                     const tecDiv = document.createElement('div');
-                    tecDiv.className = 'flex items-center justify-between p-3';
+                    tecDiv.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-slate-100 shadow-sm hover:border-slate-300 transition-colors';
                     tecDiv.innerHTML = `
-                        <div>
-                            <p class="font-medium text-sm text-gray-900 dark:text-gray-100">${tec.nombre}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">${tec.especialidad}</p>
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs border border-slate-200">
+                                    ${tec.nombre.charAt(0).toUpperCase()}
+                                </div>
+                                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${statusDot} border-2 border-white"></div>
+                            </div>
+                            <div>
+                                <p class="font-bold text-xs text-slate-800 leading-tight">${tec.nombre}</p>
+                                <p class="text-[10px] text-slate-500 leading-tight">${tec.especialidad}</p>
+                            </div>
                         </div>
-                        <span class="text-xs font-bold px-2 py-0.5 rounded-full ${statusColorClass}">
-                            ${statusText}
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${statusClass}">
+                           ${isDisponible ? 'ON' : 'OFF'}
                         </span>
                     `;
                     listContainer.appendChild(tecDiv);
                 });
             })
-            .catch(error => {
-                console.error("Error cargando lista de técnicos:", error);
-                listContainer.innerHTML = '<p class="text-red-500 p-3">Error al cargar flota.</p>';
-            });
+            .catch(error => { console.error("Error cargando flota:", error); });
     }
 
-    // --- CARGA PRINCIPAL DEL TABLERO ---
+    // --- 6. FUNCIÓN PRINCIPAL DE CARGA (POLLING) ---
     function loadKanbanBoard() {
-        console.log(`Actualizando tablero... ${new Date().toLocaleTimeString()}`);
-        
-        // Cargar técnicos disponibles (para mapa y dropdowns)
+        console.log("Actualizando tablero...");
+        // Primero obtener técnicos para tener la data para los selects y el mapa
         fetch('/api/v1/tecnicos/?disponible=true')
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
+            .then(res => res.json())
             .then(technicians => {
                 allTechnicians = technicians;
-                if(window.google && map) {
-                    updateMapMarkers(technicians); 
-                }
-                // Traer Órdenes (solo después de tener los técnicos)
+                // Si el mapa ya cargó, actualizar pines
+                if(window.google && map) updateMapMarkers(technicians); 
+                
+                // Luego cargar todas las órdenes en paralelo
                 return Promise.all([
                     fetch('/api/v1/ordenes/?estado=PENDIENTE').then(r => r.json()),
                     fetch('/api/v1/ordenes/?estado=ASIGNADA').then(r => r.json()),
@@ -313,134 +378,100 @@
                 ]);
             })
             .then(([pendientes, asignadas, enCamino, enProceso]) => {
-                const colPendientes = document.getElementById('col-pendientes');
-                const colAsignadas = document.getElementById('col-asignadas');
-                const colEjecucion = document.getElementById('col-ejecucion');
+                const renderColumn = (data, elementId, badgeId, type) => {
+                    const col = document.getElementById(elementId);
+                    document.getElementById(badgeId).innerText = data.length;
+                    col.innerHTML = '';
+                    if(data.length === 0) col.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-slate-300 py-10 opacity-50">
+                            <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            <span class="text-xs font-medium">Sin órdenes</span>
+                        </div>`;
+                    data.forEach(o => col.appendChild(createOrderCard(o, type)));
+                };
 
-                colPendientes.innerHTML = '';
-                document.getElementById('badge-pendientes').innerText = pendientes.length;
-                if(pendientes.length === 0) colPendientes.innerHTML = '<p class="text-center text-xs text-gray-400 mt-2">Sin órdenes</p>';
-                pendientes.forEach(o => colPendientes.appendChild(createOrderCard(o, 'PENDIENTE')));
-
-                colAsignadas.innerHTML = '';
-                document.getElementById('badge-asignadas').innerText = asignadas.length;
-                if(asignadas.length === 0) colAsignadas.innerHTML = '<p class="text-center text-xs text-gray-400 mt-2">Sin órdenes</p>';
-                asignadas.forEach(o => colAsignadas.appendChild(createOrderCard(o, 'ASIGNADA')));
-
-                const ejecucion = [...enCamino, ...enProceso];
-                colEjecucion.innerHTML = '';
-                document.getElementById('badge-ejecucion').innerText = ejecucion.length;
-                if(ejecucion.length === 0) colEjecucion.innerHTML = '<p class="text-center text-xs text-gray-400 mt-2">Sin órdenes</p>';
-                ejecucion.forEach(o => colEjecucion.appendChild(createOrderCard(o, 'EJECUCION')));
+                renderColumn(pendientes, 'col-pendientes', 'badge-pendientes', 'PENDIENTE');
+                renderColumn(asignadas, 'col-asignadas', 'badge-asignadas', 'ASIGNADA');
+                renderColumn([...enCamino, ...enProceso], 'col-ejecucion', 'badge-ejecucion', 'EJECUCION');
             })
-            .catch(error => {
-                console.error("Error cargando el tablero:", error);
-                document.getElementById('col-pendientes').innerHTML = '<p class="text-red-500 p-3">Error al cargar órdenes.</p>';
-                document.getElementById('col-asignadas').innerHTML = '<p class="text-red-500 p-3">Error al cargar órdenes.</p>';
-                document.getElementById('col-ejecucion').innerHTML = '<p class="text-red-500 p-3">Error al cargar órdenes.</p>';
-            });
+            .catch(error => console.error("Error cargando tablero:", error));
 
-        // Cargar la lista de TODA la flota (en paralelo)
+        // Actualizar footer de flota
         loadTechnicianStatus();
     }
     
-    // --- LÓGICA DE EMERGENCIA ---
+    // --- 7. CONTROL MODO EMERGENCIA ---
     function setEmergencyUI(isEmergency, message) {
         SystemState.is_emergency = isEmergency; 
-        emergencyButton.innerText = "Modo Emergencia"; 
-
+        
         if (isEmergency) {
+            emergencyButton.innerText = "MODO EMERGENCIA ACTIVO";
             emergencyBanner.classList.remove('hidden');
             emergencyBannerMessage.innerText = message;
-            emergencyButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-            emergencyButton.classList.add('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
+            // Estilo Botón ROJO PULSANTE
+            emergencyButton.className = "px-5 py-2.5 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 shadow-lg animate-pulse border-2 border-red-800 flex items-center gap-2";
         } else {
+            emergencyButton.innerText = "Activar E. Emergencia";
             emergencyBanner.classList.add('hidden');
-            emergencyButton.classList.remove('bg-red-600', 'hover:bg-red-700', 'animate-pulse');
-            emergencyButton.classList.add('bg-green-500', 'hover:bg-green-600');
+            // Estilo Botón AZUL NORMAL
+            emergencyButton.className = "px-5 py-2.5 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all border border-blue-700 flex items-center gap-2";
         }
     }
 
-    function closeProtocolModal() {
-        protocolModal.classList.add('hidden');
+    function closeProtocolModal() { 
+        protocolModal.classList.add('hidden'); 
     }
 
     async function checkSystemState() {
-        if (!emergencyButton || !emergencyBanner || !emergencyBannerMessage) {
-            console.error("Elementos de UI de emergencia no encontrados.");
-            return;
-        }
         try {
             const response = await fetch('/api/v1/system-state/');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             setEmergencyUI(data.is_emergency, data.message);
-        } catch (error) {
-            console.error("Error chequeando estado:", error);
-            emergencyButton.innerText = "Error Estado";
-            emergencyButton.classList.add('bg-gray-500');
-        }
+        } catch (error) { console.error("Error verificando estado del sistema:", error); }
     }
 
     async function toggleEmergencyMode() {
         let customMessage = null;
         if (!SystemState.is_emergency) {
-             customMessage = prompt(
-                "Va a activar el Modo Emergencia. El bot dejará de tomar órdenes.\n\n(Opcional) Escriba un mensaje para los clientes:",
-                "Estamos experimentando una falla masiva en el sector. Nuestros técnicos ya están informados."
-            );
-            if (customMessage === null) return;
+             customMessage = prompt("⚠️ ACTIVAR EMERGENCIA ⚠️\n\nEscriba el mensaje que verán los clientes:", "Estamos experimentando una falla masiva. Técnicos informados.");
+            if (customMessage === null) return; // Cancelado
         }
 
         emergencyButton.disabled = true;
-        emergencyButton.innerText = "Actualizando...";
-        
         try {
             const response = await fetch('/api/v1/system-state/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
                 body: JSON.stringify({ message: customMessage })
             });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             setEmergencyUI(data.is_emergency, data.message);
-            if (data.is_emergency) {
-                protocolModal.classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error("Error activando emergencia:", error);
-        } finally {
-            emergencyButton.disabled = false;
+            if (data.is_emergency) protocolModal.classList.remove('hidden');
+        } catch (error) { 
+            console.error("Error cambiando estado:", error); 
+            alert("No se pudo cambiar el estado de emergencia. Revise su conexión.");
+        } finally { 
+            emergencyButton.disabled = false; 
         }
     }
     
-    // ======================================================
-    //     ¡AQUÍ ESTÁ LA MAGIA! (EL CÓDIGO DE INICIO)
-    // =G====================================================
+    // --- 8. EJECUCIÓN INICIAL ---
     document.addEventListener("DOMContentLoaded", function() {
-        
-        // 1. Asignamos las variables del DOM aquí
+        // Asignar elementos DOM
         emergencyButton = document.getElementById('emergency-button');
         emergencyBanner = document.getElementById('emergency-banner');
         emergencyBannerMessage = document.getElementById('emergency-banner-message');
         protocolModal = document.getElementById('protocol-modal');
 
-        // 2. Cargamos el estado de emergencia
+        // Chequear estado inicial
         checkSystemState(); 
         
-        // 3. Revisamos si Google Maps cargó (initMap() es llamado por el <script> de abajo)
-        if (!window.google) {
-             console.error("Google Maps no cargó. Revisa la API Key.");
-        }
-        // initMap() se llamará automáticamente por el 'callback=initMap'
-
-        // 4. Iniciamos el auto-refresh
-        setInterval(loadKanbanBoard, 60000); // 60000 ms = 1 minuto
+        // Configurar auto-refresh cada 60s
+        setInterval(loadKanbanBoard, 60000);
     });
 
 </script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADyfobEJl8oIqIVXDfWGNfzLx7aJZLj2A&callback=initMap" 
-    async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADyfobEJl8oIqIVXDfWGNfzLx7aJZLj2A&callback=initMap" async defer></script>
 
 {% endblock javascript %}
