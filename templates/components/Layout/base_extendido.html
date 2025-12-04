@@ -4,7 +4,6 @@
 {% block content %} 
 
   <div x-data="{ open:false }" :class="{ 'overflow-y-hidden max-h-dvh' : open }">
-    <!-- Off-canvas menu for mobile, show/hide based on off-canvas menu state. -->
     <div class="relative z-50 lg:hidden" role="dialog" aria-modal="true">
       <div 
         class="fixed inset-0 bg-gray-900/80" 
@@ -45,15 +44,12 @@
               </svg>
             </button>
           </div>
-          <!-- Sidebar component, swap this element with another sidebar if you like -->
           {% include 'components/navbar/navbar_mobil.html' %}
         </div>
       </div>
     </div>
 
-    <!-- Static sidebar for desktop -->
     <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-      <!-- Sidebar component, swap this element with another sidebar if you like -->
       {% include 'components/navbar/navbar_desktop.html' %}
     </div>
 
@@ -66,15 +62,16 @@
           </svg>
         </button>
 
-        <!-- Separator -->
         <div class="h-6 w-px bg-gray-900/10 lg:hidden" aria-hidden="true"></div>
 
-        <!-- Profile dropdown -->
         {% include 'components/header/header.html' %}
       </div>
 
       <main class="pt-7">
         <div class="px-4 sm:px-6 lg:px-8 min-w-[fill-available]">
+          
+          {% include 'components/mensajes.html' %}
+
           {% block content_main %} 
           {% endblock content_main %}
         </div>

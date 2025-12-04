@@ -8,19 +8,63 @@
 
 {% block content_pages %}
 
-  <h1 class="max-w-2xl font-bold tracking-tight text-gray-900 text-2xl mb-4">Registrar Usuario</h1>
-  <form method="post" enctype="multipart/form-data">
+  <div class="mb-6">
+      <h1 class="font-bold tracking-tight text-gray-900 text-2xl">Registrar Nuevo Usuario</h1>
+      <p class="text-sm text-gray-500">Complete la información para dar de alta un acceso al sistema.</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
       {% csrf_token %}
 
-      {% include 'components/input_perfil.html' with img="/static/img/profile.webp" %}
+      <div class="mb-6 flex justify-center">
+          {% include 'components/input_perfil.html' with img="/static/img/profile.webp" %}
+      </div>
       
-      <label for="id_position_FK" class="block text-gray-700 text-sm font-bold mb-2">
-        Cargo
-      </label>
-      {{ profile_form.position_FK }}
-      {{ user_form|crispy }}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <div>
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+                Rol del Sistema (Permisos)*
+            </label>
+            {{ user_form.grupo|as_crispy_field }}
+            <p class="text-xs text-gray-400 mt-1">Define qué puede ver y hacer el usuario.</p>
+          </div>
 
-      {% include "components/btn/button.html" with button_text="Guardar cambios" %}
+          <div>
+            <label for="id_position_FK" class="block text-gray-700 text-sm font-bold mb-2">
+                Cargo Laboral*
+            </label>
+            {{ profile_form.position_FK|as_crispy_field }}
+            <p class="text-xs text-gray-400 mt-1">Título que aparecerá en su perfil.</p>
+          </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            {{ user_form.username|as_crispy_field }}
+          </div>
+          <div>
+            {{ user_form.email|as_crispy_field }}
+          </div>
+          <div>
+            {{ user_form.first_name|as_crispy_field }}
+          </div>
+          <div>
+            {{ user_form.last_name|as_crispy_field }}
+          </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-gray-100">
+          <div>
+            {{ user_form.password1|as_crispy_field }}
+          </div>
+          <div>
+            {{ user_form.password2|as_crispy_field }}
+          </div>
+      </div>
+
+      <div class="mt-8">
+        {% include "components/btn/button.html" with button_text="Crear Usuario" %}
+      </div>
       
   </form>
 
@@ -29,7 +73,5 @@
 {% endblock content_pages %}    
 
 {% block javascript %}
-
   <script defer src="{% static "js/script.js" %}"></script>
-
 {% endblock javascript %}
