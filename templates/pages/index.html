@@ -1,373 +1,940 @@
 {% extends 'components/Layout/base_extendido.html' %}
-{% load static %}   
-{% load humanize %}
+{% load static %}
 
-{% block content_main %} 
-<div class="min-h-screen px-4 py-8">
-    
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+{% block content_main %}
+<div
+    class="container mx-auto px-4 py-6 h-full flex flex-col space-y-6"
+    x-data="dashboardApp()"
+    x-init="init()"
+>
+    <!-- ENCABEZADO -->
+    <div class="mb-3 flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
-            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Gerencial & Analítica</h1>
-            <p class="text-sm text-slate-500 mt-1">Visualizando datos del período: <span id="periodo-texto" class="font-semibold text-slate-700">Última Semana</span></p>
+            <h1 class="text-2xl font-bold text-gray-800">
+                Dashboard Gerencial
+            </h1>
+            <p class="text-sm text-gray-500">
+                Visualización de órdenes y desempeño técnico
+            </p>
         </div>
-        
-        <div class="flex items-center gap-3 w-full md:w-auto">
-            <div class="relative w-full md:w-64">
-                <select id="filtro-periodo" onchange="cambiarPeriodo(this.value)" 
-                    class="block appearance-none w-full bg-white border border-slate-300 text-slate-700 py-2.5 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all font-medium text-sm cursor-pointer hover:border-slate-400">
-                    <option value="semana" selected>Última Semana</option>
-                    <option value="hoy">Hoy</option>
-                    <option value="mes">Último Mes</option>
-                    <option value="anio">Último Año</option>
-                </select>
-                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                </div>
-            </div>
 
-            <button onclick="resetFiltros()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-lg inline-flex items-center transition-all border border-slate-200 shadow-sm text-sm whitespace-nowrap">
-                <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Reset
+        <div class="flex items-center space-x-3 mt-3 md:mt-0">
+            <span class="text-xs text-gray-500" x-show="!loading">
+                Última actualización: <span x-text="lastUpdate || '—'"></span>
+            </span>
+            <button
+                type="button"
+                @click="init()"
+                class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition"
+                :disabled="loading"
+            >
+                <span x-show="!loading">Actualizar</span>
+                <span x-show="loading">Cargando...</span>
             </button>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-xl p-6 border-l-4 border-red-500 shadow-sm hover:shadow-md transition-all border-t border-r border-b border-slate-200">
-            <div class="flex justify-between items-center">
+    <!-- FILTROS + QUICK FILTERS -->
+    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div class="flex flex-wrap gap-3">
+            <!-- Periodo -->
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Periodo</label>
+                <select
+                    x-model="periodo"
+                    @change="init()"
+                    class="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white"
+                >
+                    <option value="hoy">Hoy</option>
+                    <option value="semana">Última semana</option>
+                    <option value="mes">Último mes</option>
+                    <option value="anio">Último año</option>
+                    <option value="personalizado">Personalizado</option>
+                </select>
+            </div>
+
+            <!-- Técnicos (selección múltiple con casillas) -->
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Técnicos</label>
+
+                <!-- Checkbox "Seleccionar todo" -->
+                <label
+                    class="inline-flex items-center gap-2 mb-2 px-2 py-1 rounded-lg border border-dashed border-gray-300 cursor-pointer text-xs hover:bg-gray-50"
+                >
+                    <input
+                        type="checkbox"
+                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        :checked="tecnicos.length && tecnicosSeleccionados.length === tecnicos.length"
+                        @change="toggleSeleccionarTodos($event)"
+                    >
+                    <span class="font-semibold text-gray-700">(Seleccionar todo)</span>
+                </label>
+
+                <!-- Lista de técnicos en "cuadrados" -->
+                <div
+                    class="bg-white rounded-lg border border-gray-200 p-2 max-h-28 overflow-y-auto
+                           grid grid-cols-1 sm:grid-cols-2 gap-2"
+                >
+                    <template x-for="tec in tecnicos" :key="tec.id">
+                        <label
+                            class="flex items-center gap-2 px-2 py-1 rounded-md border border-gray-200
+                                   cursor-pointer hover:bg-gray-50"
+                        >
+                            <input
+                                type="checkbox"
+                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                :value="String(tec.id)"
+                                x-model="tecnicosSeleccionados"
+                                @change="init()"
+                            >
+                            <span class="text-xs text-gray-700" x-text="tec.nombre"></span>
+                        </label>
+                    </template>
+
+                    <!-- Mensaje cuando no hay técnicos -->
+                    <p
+                        class="col-span-full text-[11px] text-gray-400"
+                        x-show="!tecnicos.length && !loading"
+                    >
+                        No hay técnicos para filtrar.
+                    </p>
+                </div>
+
+                <p class="mt-1 text-[11px] text-gray-400">
+                    Marca uno o varios técnicos, o deja todos sin marcar para ver el total.
+                </p>
+            </div>
+
+            <!-- Rango personalizado -->
+            <div
+                class="flex items-end gap-2"
+                x-show="periodo === 'personalizado'"
+                x-cloak
+            >
                 <div>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Pendientes</p>
-                    <h2 id="kpi-pendientes" class="text-4xl font-bold text-slate-900 mt-2">...</h2>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Desde</label>
+                    <input
+                        type="date"
+                        x-model="fechaInicio"
+                        class="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white"
+                    >
                 </div>
-                <div class="p-3 bg-red-50 text-red-600 rounded-xl border border-red-100">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Hasta</label>
+                    <input
+                        type="date"
+                        x-model="fechaFin"
+                        class="border border-gray-300 rounded-lg text-sm px-3 py-2 bg-white"
+                    >
                 </div>
+                <button
+                    type="button"
+                    @click="init()"
+                    class="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-slate-700 hover:bg-slate-800"
+                >
+                    Aplicar
+                </button>
             </div>
         </div>
-        <div class="bg-white rounded-xl p-6 border-l-4 border-yellow-500 shadow-sm hover:shadow-md transition-all border-t border-r border-b border-slate-200">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">En Ejecución</p>
-                    <h2 id="kpi-proceso" class="text-4xl font-bold text-slate-900 mt-2">...</h2>
-                </div>
-                <div class="p-3 bg-yellow-50 text-yellow-600 rounded-xl border border-yellow-100">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                </div>
-            </div>
+
+        <!-- Filtros rápidos -->
+        <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
+            <button
+                type="button"
+                @click="aplicarFiltroRapido('hoy_estrella')"
+                class="px-4 py-2 rounded-full text-xs font-medium border"
+                :class="filtroRapidoActivo === 'hoy_estrella'
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+            >
+                Hoy – técnico estrella
+            </button>
+
+            <button
+                type="button"
+                @click="aplicarFiltroRapido('pendientes_semana')"
+                class="px-4 py-2 rounded-full text-xs font-medium border"
+                :class="filtroRapidoActivo === 'pendientes_semana'
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+            >
+                Última semana – solo pendientes
+            </button>
+
+            <!-- Restablecer filtros -->
+            <button
+                type="button"
+                @click="resetFiltros()"
+                class="px-4 py-2 rounded-full text-xs font-medium border bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            >
+                Restablecer filtros
+            </button>
+
+            <!-- Informe PDF -->
+            <button
+                type="button"
+                @click="exportarPDF()"
+                class="px-4 py-2 rounded-full text-xs font-medium border bg-blue-600 text-white hover:bg-blue-700"
+            >
+                Informe PDF
+            </button>
         </div>
-        <div class="bg-white rounded-xl p-6 border-l-4 border-green-500 shadow-sm hover:shadow-md transition-all border-t border-r border-b border-slate-200">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider">Terminadas</p>
-                    <h2 id="kpi-terminadas" class="text-4xl font-bold text-slate-900 mt-2">...</h2>
+    </div>
+
+    <!-- ALERTAS OPERACIONALES -->
+    <template x-if="alertas.length">
+        <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div class="flex items-center justify-between mb-1">
+                <div class="font-semibold flex items-center gap-2">
+                    <span>⚠️ Alertas operacionales</span>
                 </div>
-                <div class="p-3 bg-green-50 text-green-600 rounded-xl border border-green-100">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
+                <span class="text-[11px] text-amber-700" x-text="periodoLabel()"></span>
+            </div>
+            <ul class="list-disc pl-5 space-y-1">
+                <template x-for="(msg, idx) in alertas" :key="idx">
+                    <li x-text="msg"></li>
+                </template>
+            </ul>
+        </div>
+    </template>
+
+    <!-- MENSAJE DE ERROR -->
+    <template x-if="error">
+        <div class="p-3 rounded-md bg-red-100 text-red-700 text-sm">
+            Error al cargar datos: <span x-text="error"></span>
+        </div>
+    </template>
+
+    <!-- KPIs 2x2 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Total órdenes -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <h3 class="text-xs font-medium text-gray-500">TOTAL DE ÓRDENES</h3>
+            <p class="mt-2 text-3xl font-bold text-gray-900" x-text="total_ordenes"></p>
+            <p class="text-xs text-gray-400 mt-1">En el período seleccionado.</p>
+        </div>
+
+        <!-- % Pendientes -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <h3 class="text-xs font-medium text-gray-500">% PENDIENTES</h3>
+            <p class="mt-2 text-3xl font-bold text-amber-500" x-text="porc_pendientes.toFixed(0) + '%'"></p>
+            <p class="text-xs text-gray-400 mt-1">Sobre el total de órdenes.</p>
+        </div>
+
+        <!-- % En ejecución -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <h3 class="text-xs font-medium text-gray-500">% EN EJECUCIÓN</h3>
+            <p class="mt-2 text-3xl font-bold text-blue-500" x-text="porc_en_ejecucion.toFixed(0) + '%'"></p>
+            <p class="text-xs text-gray-400 mt-1">Técnicos trabajando actualmente.</p>
+        </div>
+
+        <!-- % Terminadas -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <h3 class="text-xs font-medium text-gray-500">% TERMINADAS</h3>
+            <p class="mt-2 text-3xl font-bold text-emerald-500" x-text="porc_terminadas.toFixed(0) + '%'"></p>
+            <p class="text-xs text-gray-400 mt-1">Órdenes completadas en el período.</p>
+        </div>
+    </div>
+
+    <!-- TARJETAS 1x3 (click abre modal) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Pendientes -->
+        <button
+            type="button"
+            class="bg-white rounded-xl shadow p-4 flex items-center justify-between text-left hover:bg-slate-50 transition"
+            @click="abrirModal('pendientes')"
+        >
+            <div>
+                <h3 class="text-xs font-medium text-gray-500">PENDIENTES</h3>
+                <p class="mt-2 text-3xl font-bold text-rose-500" x-text="kpis_pendientes"></p>
+                <p class="text-xs text-gray-400 mt-1">Por asignar o iniciar</p>
+            </div>
+            <div class="text-amber-500 text-3xl">
+                ⚠️
+            </div>
+        </button>
+
+        <!-- En ejecución -->
+        <button
+            type="button"
+            class="bg-white rounded-xl shadow p-4 flex items-center justify-between text-left hover:bg-slate-50 transition"
+            @click="abrirModal('en_ejecucion')"
+        >
+            <div>
+                <h3 class="text-xs font-medium text-gray-500">EN EJECUCIÓN</h3>
+                <p class="mt-2 text-3xl font-bold text-orange-500" x-text="kpis_en_proceso"></p>
+                <p class="text-xs text-gray-400 mt-1">Técnicos trabajando</p>
+            </div>
+            <div class="text-orange-500 text-3xl">
+                ⚡
+            </div>
+        </button>
+
+        <!-- Terminadas -->
+        <button
+            type="button"
+            class="bg-white rounded-xl shadow p-4 flex items-center justify-between text-left hover:bg-slate-50 transition"
+            @click="abrirModal('terminadas')"
+        >
+            <div>
+                <h3 class="text-xs font-medium text-gray-500">TERMINADAS</h3>
+                <p class="mt-2 text-3xl font-bold text-emerald-500" x-text="kpis_terminadas"></p>
+                <p class="text-xs text-gray-400 mt-1">En este período</p>
+            </div>
+            <div class="text-emerald-500 text-3xl">
+                ✅
+            </div>
+        </button>
+    </div>
+
+    <!-- SLA / TIEMPO PROMEDIO -->
+    <div class="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <h3 class="text-sm font-medium text-gray-500">CUMPLIMIENTO SLA</h3>
+            <p class="mt-2 text-3xl font-bold text-indigo-600" x-text="sla_porcentaje + '%'"></p>
+            <p class="text-xs text-gray-400 mt-1">
+                Órdenes dentro del SLA configurado.
+            </p>
+        </div>
+        <div class="mt-3 md:mt-0 text-[11px] text-gray-500 leading-snug">
+            <div>
+                Fuera de SLA:
+                <span class="font-semibold text-red-500" x-text="sla_fuera"></span>
+            </div>
+            <div>
+                Tiempo prom. cierre:
+                <span class="font-semibold" x-text="tiempo_promedio_cierre.toFixed(1) + ' h'"></span>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative hover:shadow-md transition-shadow">
-            <div id="loader-tendencia" class="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10 hidden rounded-xl">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">📈 Demanda y Predicción (IA)</h3>
-            <p class="text-sm text-slate-500 mb-6">Comparativa de flujo real vs. estimación por algoritmo.</p>
-            <div class="relative h-72 w-full">
-                <canvas id="chartTendencia"></canvas>
+    <!-- TOP 3 TÉCNICOS -->
+    <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-gray-700">
+                Top 3 técnicos del período
+            </h2>
+            <span class="text-xs text-gray-400" x-text="periodoLabel()"></span>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3">
+            <template x-for="(tec, idx) in ranking_tecnicos.slice(0,3)" :key="tec.id || tec.nombre">
+                <div class="flex-1 border rounded-lg px-3 py-2 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl" x-text="idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉')"></span>
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700" x-text="tec.nombre"></p>
+                            <p class="text-[11px] text-gray-400">
+                                <span x-text="tec.terminadas"></span> órdenes ·
+                                SLA <span x-text="tec.sla_porcentaje + '%'"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <span
+                        class="text-[11px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold"
+                        x-text="(tec.tiempo_promedio_cierre_horas || 0).toFixed(1) + ' h prom.'"
+                    ></span>
+                </div>
+            </template>
+
+            <template x-if="ranking_tecnicos.length === 0">
+                <p class="text-xs text-gray-400">No hay datos suficientes en este período.</p>
+            </template>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS PRINCIPALES -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Gráfico de tendencia -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <h2 class="text-sm font-semibold text-gray-700">
+                Demanda y Tendencia de Órdenes
+            </h2>
+            <p class="text-xs text-gray-400">
+                Órdenes creadas por día en el período seleccionado.
+            </p>
+            <div class="mt-4">
+                <canvas id="chartTendencia" class="w-full h-48"></canvas>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 relative hover:shadow-md transition-shadow">
-             <div id="loader-prod" class="absolute inset-0 bg-white/90 backdrop-blur-sm flex items-center justify-center z-10 hidden rounded-xl">
-                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
+        <!-- Órdenes por técnico -->
+        <div class="bg-white rounded-xl shadow p-4">
+            <h2 class="text-sm font-semibold text-gray-700">
+                Órdenes por Técnico
+            </h2>
+            <p class="text-xs text-gray-400">
+                Cantidad de órdenes asignadas por técnico en el período.
+            </p>
+            <div class="mt-4">
+                <canvas id="chartTecnicos" class="w-full h-48"></canvas>
             </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-1">🏆 Productividad Técnica</h3>
-            <p class="text-sm text-slate-500 mb-6">Ranking por órdenes terminadas en el período.</p>
-            <div class="relative h-72 w-full">
-                <canvas id="chartProductividad"></canvas>
+
+            <div class="mt-4 border-t pt-3">
+                <p class="text-xs text-gray-500">
+                    Productividad general:
+                    <span class="font-semibold text-indigo-600" x-text="productividad_tecnica + '%'"></span>
+                    &nbsp;de órdenes terminadas respecto del total del período.
+                </p>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
-        <div class="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <h2 class="text-base font-bold leading-7 text-slate-900">Últimas Órdenes Cerradas</h2>
-            <span class="text-xs font-medium text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-sm">En este período</span>
+    <!-- PIE DE ESTADOS -->
+    <div class="bg-white rounded-xl shadow p-4">
+        <h2 class="text-sm font-semibold text-gray-700">
+            Distribución de Estados
+        </h2>
+        <p class="text-xs text-gray-400">
+            Proporción de órdenes pendientes, en ejecución y terminadas en el período.
+        </p>
+        <div class="mt-4">
+            <canvas id="chartEstados" class="w-full h-64"></canvas>
         </div>
+    </div>
+
+    <!-- RANKING TÉCNICOS TABLA COMPLETA -->
+    <div class="bg-white rounded-xl shadow">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-gray-700">
+                Ranking de Técnicos (solo órdenes terminadas)
+            </h2>
+            <span class="text-xs text-gray-400">
+                Ordenado por cantidad de órdenes terminadas en el período.
+            </span>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="w-full whitespace-nowrap text-left text-sm text-slate-600">
-                <thead class="bg-white text-xs uppercase font-bold text-slate-400 border-b border-slate-100">
+            <table class="min-w-full text-xs md:text-sm">
+                <thead class="bg-gray-50 text-gray-500">
                     <tr>
-                        <th class="px-6 py-4 tracking-wider">ID</th>
-                        <th class="px-6 py-4 tracking-wider">Técnico</th>
-                        <th class="px-6 py-4 tracking-wider">Cliente</th>
-                        <th class="px-6 py-4 text-right tracking-wider">Fecha Cierre</th>
+                        <th class="px-4 py-2 text-left font-medium">TÉCNICO</th>
+                        <th class="px-4 py-2 text-left font-medium">TERMINADAS</th>
+                        <th class="px-4 py-2 text-left font-medium">% SLA OK</th>
+                        <th class="px-4 py-2 text-left font-medium">T. PROM. (h)</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-historial" class="divide-y divide-slate-100 bg-white">
-                    <tr><td colspan="4" class="text-center py-6 text-slate-400 font-medium">Cargando datos...</td></tr>
+                <tbody>
+                    <tr x-show="!loading && ranking_tecnicos.length === 0">
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-400">
+                            No hay datos de técnicos en este período.
+                        </td>
+                    </tr>
+
+                    <template x-for="tec in ranking_tecnicos" :key="tec.id || tec.nombre">
+                        <tr class="border-t border-gray-100">
+                            <td class="px-4 py-2 text-gray-700" x-text="tec.nombre"></td>
+                            <td class="px-4 py-2 text-gray-700" x-text="tec.terminadas"></td>
+                            <td class="px-4 py-2 text-gray-700" x-text="tec.sla_porcentaje + '%'"></td>
+                            <td class="px-4 py-2 text-gray-700" x-text="(tec.tiempo_promedio_cierre_horas || 0).toFixed(1)"></td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
     </div>
-</div>
-{% endblock content_main %}
 
-{% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- HISTORIAL ÓRDENES CERRADAS -->
+    <div class="bg-white rounded-xl shadow">
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-gray-700">
+                Últimas Órdenes Cerradas
+            </h2>
 
-<script>
-// --- Variables Globales ---
-let chartTendenciaInstance = null;
-let chartProductividadInstance = null;
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-gray-400" x-text="'En este período (' + historial.length + ' registros)'"></span>
 
-document.addEventListener("DOMContentLoaded", function() {
-    cargarEstadisticas('semana'); // Carga inicial
-});
+                <!-- Botón Exportar CSV -->
+                <button
+                    type="button"
+                    class="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    @click="exportarHistorial()"
+                >
+                    Exportar CSV
+                </button>
+            </div>
+        </div>
 
-// --- Funciones de Filtro ---
-function cambiarPeriodo(periodo) {
-    const textos = {
-        'hoy': 'Hoy',
-        'semana': 'Última Semana',
-        'mes': 'Último Mes',
-        'anio': 'Último Año'
-    };
-    document.getElementById('periodo-texto').innerText = textos[periodo];
-    cargarEstadisticas(periodo);
-}
-
-function resetFiltros() {
-    document.getElementById('filtro-periodo').value = 'semana';
-    cambiarPeriodo('semana');
-}
-
-// Helper URL para entornos locales/dev
-function getApiUrl(endpoint) {
-    const { protocol } = window.location;
-    if (protocol === 'blob:' || protocol === 'file:') {
-        return `http://127.0.0.1:8000${endpoint}`;
-    }
-    return endpoint;
-}
-
-// --- LÓGICA PRINCIPAL DE CARGA ---
-async function cargarEstadisticas(periodo) {
-    // Mostrar Loaders
-    document.getElementById('loader-tendencia').classList.remove('hidden');
-    document.getElementById('loader-prod').classList.remove('hidden');
-
-    try {
-        const url = getApiUrl(`/api/v1/dashboard-stats/?periodo=${periodo}`);
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Error en API');
-        const data = await response.json();
-
-        // 1. Actualizar KPIs con animación
-        animarNumero('kpi-pendientes', data.kpis.pendientes);
-        animarNumero('kpi-proceso', data.kpis.en_proceso);
-        animarNumero('kpi-terminadas', data.kpis.terminadas);
-
-        // Configuración de Colores Chart.js (Modo Light)
-        const textColor = '#64748b'; // slate-500
-        const gridColor = '#f1f5f9'; // slate-100
-
-        // ============================================================
-        // 2. Gráfico Tendencia: CONFIGURACIÓN PREMIUM (IA vs Real)
-        // ============================================================
-        const ctxTendencia = document.getElementById('chartTendencia').getContext('2d');
-
-        // Efecto Degradado (Gradient) para datos reales
-        let gradientReal = ctxTendencia.createLinearGradient(0, 0, 0, 400);
-        gradientReal.addColorStop(0, 'rgba(37, 99, 235, 0.2)'); // Azul suave arriba
-        gradientReal.addColorStop(1, 'rgba(37, 99, 235, 0.0)'); // Transparente abajo
-
-        if (chartTendenciaInstance) chartTendenciaInstance.destroy();
-
-        chartTendenciaInstance = new Chart(ctxTendencia, {
-            type: 'line',
-            data: {
-                labels: data.grafico_tendencia.fechas,
-                datasets: [
-                    {
-                        label: 'Demanda Real',
-                        data: data.grafico_tendencia.real,
-                        borderColor: '#2563eb', // Blue-600
-                        backgroundColor: gradientReal,
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#2563eb',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        order: 1 // Capa superior
-                    },
-                    {
-                        label: 'Predicción IA',
-                        data: data.grafico_tendencia.prediccion,
-                        borderColor: '#10b981', // Emerald-500
-                        backgroundColor: 'transparent',
-                        borderWidth: 3,
-                        borderDash: [8, 5], // Línea punteada
-                        tension: 0.4,
-                        pointStyle: 'rectRot', // Rombo distintivo
-                        pointRadius: 5,
-                        pointBackgroundColor: '#10b981',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        order: 0 // Capa inferior
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                plugins: { 
-                    legend: { 
-                        labels: { 
-                            color: textColor,
-                            usePointStyle: true,
-                            font: { family: "'Inter', sans-serif", weight: '600' },
-                            padding: 20
-                        },
-                        position: 'top',
-                        align: 'end'
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)', // Slate-900
-                        titleColor: '#f8fafc',
-                        bodyColor: '#f8fafc',
-                        padding: 12,
-                        cornerRadius: 8,
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) label += ': ';
-                                if (context.parsed.y !== null) label += context.parsed.y;
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        grid: { color: gridColor, borderDash: [5, 5] }, 
-                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10 } 
-                    },
-                    x: { 
-                        grid: { display: false }, 
-                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10 } 
-                    }
-                }
-            }
-        });
-
-        // ============================================================
-        // 3. Gráfico Productividad
-        // ============================================================
-        const ctxProd = document.getElementById('chartProductividad');
-        if (chartProductividadInstance) chartProductividadInstance.destroy();
-
-        chartProductividadInstance = new Chart(ctxProd, {
-            type: 'bar',
-            data: {
-                labels: data.grafico_tecnicos.categorias,
-                datasets: [{
-                    label: 'Órdenes Terminadas',
-                    data: data.grafico_tecnicos.valores,
-                    backgroundColor: '#7c3aed', // Violet-600
-                    hoverBackgroundColor: '#6d28d9',
-                    borderRadius: 6,
-                    borderSkipped: false,
-                    barThickness: 'flex',
-                    maxBarThickness: 40
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                        titleColor: '#f8fafc',
-                        bodyColor: '#f8fafc',
-                        padding: 12,
-                        cornerRadius: 8
-                    }
-                },
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        grid: { color: gridColor, drawBorder: false }, 
-                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10, stepSize: 1 } 
-                    },
-                    x: { 
-                        grid: { display: false }, 
-                        ticks: { color: textColor, font: { family: "'Inter', sans-serif" }, padding: 10 } 
-                    }
-                }
-            }
-        });
-
-        // 4. Actualizar Tabla Historial
-        const tbody = document.getElementById('tabla-historial');
-        tbody.innerHTML = '';
-        if (data.historial.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-slate-400 font-medium">No hay datos recientes.</td></tr>';
-        } else {
-            data.historial.forEach(item => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                        <td class="px-6 py-4 font-bold text-blue-600">#${item.id}</td>
-                        <td class="px-6 py-4 font-medium text-slate-800">${item.tecnico}</td>
-                        <td class="px-6 py-4 text-slate-600">${item.cliente}</td>
-                        <td class="px-6 py-4 text-right text-slate-500 text-xs font-medium">${item.fecha}</td>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-xs md:text-sm">
+                <thead class="bg-gray-50 text-gray-500">
+                    <tr>
+                        <th class="px-4 py-2 text-left font-medium">ID</th>
+                        <th class="px-4 py-2 text-left font-medium">TÉCNICO</th>
+                        <th class="px-4 py-2 text-left font-medium">CLIENTE</th>
+                        <th class="px-4 py-2 text-left font-medium">FECHA CIERRE</th>
                     </tr>
-                `;
-            });
-        }
+                </thead>
+                <tbody>
+                    <tr x-show="!loading && historial.length === 0">
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-400">
+                            No hay órdenes cerradas en este período.
+                        </td>
+                    </tr>
 
-    } catch (error) {
-        console.error("Error cargando estadísticas:", error);
-    } finally {
-        // Ocultar Loaders
-        document.getElementById('loader-tendencia').classList.add('hidden');
-        document.getElementById('loader-prod').classList.add('hidden');
+                    <template x-for="orden in historial" :key="orden.id">
+                        <tr class="border-t border-gray-100">
+                            <td class="px-4 py-2 text-gray-700" x-text="orden.id"></td>
+                            <td class="px-4 py-2 text-gray-700" x-text="orden.tecnico"></td>
+                            <td class="px-4 py-2 text-gray-700" x-text="orden.cliente"></td>
+                            <td class="px-4 py-2 text-gray-700" x-text="orden.fecha_cierre"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLE ÓRDENES -->
+    <div
+        x-show="modalAbierto"
+        x-cloak
+        class="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
+    >
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[80vh] flex flex-col">
+            <div class="px-4 py-3 border-b flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-gray-800" x-text="modalTitulo"></h3>
+                <button
+                    type="button"
+                    class="text-gray-400 hover:text-gray-600"
+                    @click="cerrarModal()"
+                >
+                    ✕
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-auto">
+                <table class="min-w-full text-xs md:text-sm">
+                    <thead class="bg-gray-50 text-gray-500">
+                        <tr>
+                            <th class="px-4 py-2 text-left font-medium">ID</th>
+                            <th class="px-4 py-2 text-left font-medium">CLIENTE</th>
+                            <th class="px-4 py-2 text-left font-medium">TÉCNICO</th>
+                            <th class="px-4 py-2 text-left font-medium">ESTADO</th>
+                            <th class="px-4 py-2 text-left font-medium">FECHA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr x-show="loadingModal">
+                            <td colspan="5" class="px-4 py-6 text-center text-gray-400">
+                                Cargando órdenes...
+                            </td>
+                        </tr>
+
+                        <tr x-show="!loadingModal && ordenesModal.length === 0">
+                            <td colspan="5" class="px-4 py-6 text-center text-gray-400">
+                                No hay órdenes para este filtro.
+                            </td>
+                        </tr>
+
+                        <template x-for="ot in ordenesModal" :key="ot.id">
+                            <tr class="border-t border-gray-100">
+                                <td class="px-4 py-2 text-gray-700" x-text="ot.id"></td>
+                                <td class="px-4 py-2 text-gray-700" x-text="ot.cliente_nombre || ot.cliente || ''"></td>
+                                <td class="px-4 py-2 text-gray-700" x-text="ot.tecnico_nombre || ot.tecnico || ''"></td>
+                                <td class="px-4 py-2 text-gray-700" x-text="ot.estado_display || ot.estado"></td>
+                                <td class="px-4 py-2 text-gray-700" x-text="ot.fecha_creacion || ot.fecha_cierre || ''"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="px-4 py-3 border-t flex justify-end">
+                <button
+                    type="button"
+                    class="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    @click="cerrarModal()"
+                >
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPT DEL DASHBOARD (AlpineJS + Chart.js) -->
+<script>
+    function dashboardApp() {
+        return {
+            // estado general
+            loading: true,
+            error: null,
+            lastUpdate: null,
+
+            // filtros
+            periodo: 'mes',
+            tecnicosSeleccionados: [],
+            fechaInicio: '',
+            fechaFin: '',
+            tecnicos: [],
+            filtroRapidoActivo: null,
+
+            // KPIs planos
+            total_ordenes: 0,
+            porc_pendientes: 0,
+            porc_en_ejecucion: 0,
+            porc_terminadas: 0,
+
+            // KPIs legacy
+            kpis_pendientes: 0,
+            kpis_en_proceso: 0,
+            kpis_terminadas: 0,
+            productividad_tecnica: 0,
+
+            // SLA
+            tiempo_promedio_cierre: 0,
+            sla_porcentaje: 0,
+            sla_fuera: 0,
+
+            // tablas / datos
+            historial: [],
+            grafico_tendencia: { fechas: [], real: [], prediccion: [] },
+            grafico_tecnicos: { categorias: [], valores: [] },
+            grafico_estados: { labels: [], valores: [] },
+            ranking_tecnicos: [],
+
+            // alertas
+            alertas: [],
+            alertas_detalle: { pendientes_vencidas: 0, tecnicos_sobrecarga: [], umbral_sobrecarga: 0 },
+
+            // instancias Chart.js
+            chartTendencia: null,
+            chartTecnicos: null,
+            chartEstados: null,
+
+            // modal
+            modalAbierto: false,
+            modalTitulo: '',
+            modalTipo: '',
+            ordenesModal: [],
+            loadingModal: false,
+
+            async init() {
+                this.loading = true;
+                this.error = null;
+
+                try {
+                    const params = new URLSearchParams();
+
+                    if (this.periodo) params.append('periodo', this.periodo);
+
+                    // varios técnicos
+                    if (this.tecnicosSeleccionados.length) {
+                        params.append('tecnicos', this.tecnicosSeleccionados.join(','));
+                    }
+
+                    if (this.periodo === 'personalizado' && this.fechaInicio && this.fechaFin) {
+                        params.append('inicio', this.fechaInicio);
+                        params.append('fin', this.fechaFin);
+                    }
+
+                    const url = '/api/v1/dashboard-stats/' + (params.toString() ? '?' + params.toString() : '');
+
+                    const response = await fetch(url, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Error HTTP ' + response.status);
+                    }
+
+                    const data = await response.json();
+
+                    // KPIs principales
+                    this.kpis_pendientes   = data.kpis_pendientes   ?? data.kpis?.pendientes   ?? 0;
+                    this.kpis_en_proceso   = data.kpis_en_proceso   ?? data.kpis?.en_proceso   ?? 0;
+                    this.kpis_terminadas   = data.kpis_terminadas   ?? data.kpis?.terminadas   ?? 0;
+                    this.productividad_tecnica = data.productividad_tecnica ?? data.kpis?.productividad_tecnica ?? 0;
+
+                    const total = (this.kpis_pendientes + this.kpis_en_proceso + this.kpis_terminadas) || 0;
+                    this.total_ordenes = total;
+                    this.porc_pendientes   = total ? (this.kpis_pendientes   * 100) / total : 0;
+                    this.porc_en_ejecucion = total ? (this.kpis_en_proceso   * 100) / total : 0;
+                    this.porc_terminadas   = total ? (this.kpis_terminadas   * 100) / total : 0;
+
+                    // SLA
+                    this.tiempo_promedio_cierre = data.kpi_tiempo_promedio_cierre_horas ?? data.kpis?.tiempo_promedio_cierre_horas ?? 0;
+                    this.sla_porcentaje         = data.kpi_sla_porcentaje                ?? data.kpis?.sla_porcentaje                ?? 0;
+                    this.sla_fuera              = data.kpi_sla_fuera                     ?? data.kpis?.sla_fuera                     ?? 0;
+
+                    // tabla historial
+                    this.historial = Array.isArray(data.historial) ? data.historial : [];
+
+                    // gráficos
+                    this.grafico_tendencia = data.grafico_tendencia || { fechas: [], real: [], prediccion: [] };
+                    this.grafico_tecnicos  = data.grafico_tecnicos  || { categorias: [], valores: [] };
+                    this.grafico_estados   = data.grafico_estados   || { labels: [], valores: [] };
+
+                    // ranking
+                    this.ranking_tecnicos = Array.isArray(data.ranking_tecnicos) ? data.ranking_tecnicos : [];
+
+                    // alertas
+                    this.alertas = Array.isArray(data.alertas) ? data.alertas : [];
+                    this.alertas_detalle = data.alertas_detalle || { pendientes_vencidas: 0, tecnicos_sobrecarga: [], umbral_sobrecarga: 0 };
+
+                    // técnicos disponibles
+                    this.tecnicos = Array.isArray(data.filtros_disponibles) ? data.filtros_disponibles : [];
+
+                    this.lastUpdate = new Date().toLocaleString();
+
+                    this.$nextTick(() => {
+                        this.renderCharts();
+                    });
+
+                } catch (err) {
+                    console.error(err);
+                    this.error = err.message || 'Error desconocido';
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            aplicarFiltroRapido(nombre) {
+                this.filtroRapidoActivo = nombre;
+
+                if (nombre === 'hoy_estrella') {
+                    this.periodo = 'hoy';
+
+                    if (this.ranking_tecnicos.length) {
+                        const topId = this.ranking_tecnicos[0].id || '';
+                        this.tecnicosSeleccionados = topId ? [String(topId)] : [];
+                    } else {
+                        this.tecnicosSeleccionados = [];
+                    }
+
+                    this.init();
+                } else if (nombre === 'pendientes_semana') {
+                    this.periodo = 'semana';
+                    this.tecnicosSeleccionados = [];
+                    this.init();
+                }
+            },
+
+            resetFiltros() {
+                this.periodo = 'mes';
+                this.tecnicosSeleccionados = [];
+                this.fechaInicio = '';
+                this.fechaFin = '';
+                this.filtroRapidoActivo = null;
+                this.init();
+            },
+
+            // nuevo: seleccionar / deseleccionar todos los técnicos
+            toggleSeleccionarTodos(event) {
+                const checked = event.target.checked;
+
+                if (checked) {
+                    this.tecnicosSeleccionados = this.tecnicos.map(t => String(t.id));
+                } else {
+                    this.tecnicosSeleccionados = [];
+                }
+
+                this.init();
+            },
+
+            async abrirModal(tipo) {
+                this.modalTipo = tipo;
+                this.modalAbierto = true;
+                this.loadingModal = true;
+                this.ordenesModal = [];
+
+                let estadoParam = '';
+                if (tipo === 'pendientes') {
+                    this.modalTitulo = 'Órdenes pendientes';
+                    estadoParam = 'PENDIENTE';
+                } else if (tipo === 'en_ejecucion') {
+                    this.modalTitulo = 'Órdenes en ejecución';
+                    estadoParam = 'EN_PROCESO';
+                } else if (tipo === 'terminadas') {
+                    this.modalTitulo = 'Órdenes terminadas';
+                    estadoParam = 'TERMINADO';
+                }
+
+                try {
+                    const params = new URLSearchParams();
+                    if (estadoParam) {
+                        params.append('estado', estadoParam);
+                    }
+
+                    const url = '/api/v1/ordenes/' + (params.toString() ? '?' + params.toString() : '');
+                    const resp = await fetch(url, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!resp.ok) {
+                        throw new Error('Error HTTP ' + resp.status);
+                    }
+
+                    const data = await resp.json();
+                    this.ordenesModal = Array.isArray(data) ? data : (data.results || []);
+
+                } catch (e) {
+                    console.error(e);
+                    this.ordenesModal = [];
+                } finally {
+                    this.loadingModal = false;
+                }
+            },
+
+            cerrarModal() {
+                this.modalAbierto = false;
+                this.modalTipo = '';
+                this.modalTitulo = '';
+                this.ordenesModal = [];
+            },
+
+            renderCharts() {
+                // === Gráfico de tendencia ===
+                const canvas1 = document.getElementById('chartTendencia');
+                if (canvas1) {
+                    if (this.chartTendencia) {
+                        this.chartTendencia.destroy();
+                        this.chartTendencia = null;
+                    }
+
+                    if (this.grafico_tendencia.fechas.length) {
+                        this.chartTendencia = new Chart(canvas1, {
+                            type: 'line',
+                            data: {
+                                labels: this.grafico_tendencia.fechas,
+                                datasets: [
+                                    {
+                                        label: 'Órdenes creadas',
+                                        data: this.grafico_tendencia.real,
+                                        fill: false,
+                                        tension: 0.3,
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { display: true },
+                                },
+                                scales: {
+                                    y: { beginAtZero: true }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // === Gráfico órdenes por técnico ===
+                const canvas2 = document.getElementById('chartTecnicos');
+                if (canvas2) {
+                    if (this.chartTecnicos) {
+                        this.chartTecnicos.destroy();
+                        this.chartTecnicos = null;
+                    }
+
+                    if (this.grafico_tecnicos.categorias.length) {
+                        this.chartTecnicos = new Chart(canvas2, {
+                            type: 'bar',
+                            data: {
+                                labels: this.grafico_tecnicos.categorias,
+                                datasets: [
+                                    {
+                                        label: 'Órdenes',
+                                        data: this.grafico_tecnicos.valores,
+                                    }
+                                ]
+                            },
+                            options: {
+                                indexAxis: 'y',
+                                responsive: true,
+                                plugins: {
+                                    legend: { display: false },
+                                },
+                                scales: {
+                                    x: { beginAtZero: true }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // === Gráfico de estados (pie) ===
+                const canvas3 = document.getElementById('chartEstados');
+                if (canvas3) {
+                    if (this.chartEstados) {
+                        this.chartEstados.destroy();
+                        this.chartEstados = null;
+                    }
+
+                    if (this.grafico_estados.labels.length) {
+                        this.chartEstados = new Chart(canvas3, {
+                            type: 'pie',
+                            data: {
+                                labels: this.grafico_estados.labels,
+                                datasets: [
+                                    {
+                                        data: this.grafico_estados.valores,
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { position: 'top' },
+                                }
+                            }
+                        });
+                    }
+                }
+            },
+
+            exportarHistorial() {
+                const params = new URLSearchParams();
+
+                if (this.periodo) {
+                    params.append('periodo', this.periodo);
+                }
+                if (this.tecnicosSeleccionados.length) {
+                    params.append('tecnicos', this.tecnicosSeleccionados.join(','));
+                }
+                if (this.periodo === 'personalizado' && this.fechaInicio && this.fechaFin) {
+                    params.append('inicio', this.fechaInicio);
+                    params.append('fin', this.fechaFin);
+                }
+
+                const url = '/api/v1/dashboard-historial.csv' + (params.toString() ? '?' + params.toString() : '');
+                window.location.href = url;
+            },
+
+            // descarga del informe PDF completo
+            exportarPDF() {
+                const params = new URLSearchParams();
+
+                if (this.periodo) {
+                    params.append('periodo', this.periodo);
+                }
+                if (this.tecnicosSeleccionados.length) {
+                    params.append('tecnicos', this.tecnicosSeleccionados.join(','));
+                }
+                if (this.periodo === 'personalizado' && this.fechaInicio && this.fechaFin) {
+                    params.append('inicio', this.fechaInicio);
+                    params.append('fin', this.fechaFin);
+                }
+
+                const url = '/api/v1/dashboard-informe.pdf' + (params.toString() ? '?' + params.toString() : '');
+                window.location.href = url;
+            },
+
+            periodoLabel() {
+                switch (this.periodo) {
+                    case 'hoy': return 'Hoy';
+                    case 'semana': return 'Última semana';
+                    case 'mes': return 'Último mes';
+                    case 'anio': return 'Último año';
+                    case 'personalizado': return 'Rango personalizado';
+                    default: return this.periodo;
+                }
+            }
+        }
     }
-}
-
-// Función auxiliar: Animación de conteo
-function animarNumero(id, valorFinal) {
-    const elemento = document.getElementById(id);
-    const valorInicial = parseInt(elemento.innerText) || 0;
-    if (valorInicial === valorFinal) return;
-    
-    let startTimestamp = null;
-    const duration = 1000;
-
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        elemento.innerText = Math.floor(progress * (valorFinal - valorInicial) + valorInicial);
-        if (progress < 1) {
-            window.requestAnimationFrame(step);
-        } else {
-            elemento.innerText = valorFinal;
-        }
-    };
-    window.requestAnimationFrame(step);
-}
 </script>
-{% endblock javascript %}
+
+{% endblock %}

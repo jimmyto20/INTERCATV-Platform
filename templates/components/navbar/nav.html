@@ -1,53 +1,76 @@
+{% load static %}
+
 <nav class="flex flex-1 flex-col">
   <ul class="flex flex-1 flex-col gap-y-7">
     <li>
       <ul class="-mx-2 space-y-1">
         
-        <li>
-          <a href="{% url 'Home' %}" 
-             class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
-             {% if request.path == '/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
-            <svg class="h-6 w-6 shrink-0 {% if request.path == '/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Dashboard General
-          </a>
-        </li>
-
-        <li>
-          <a href="{% url 'gestor_ordenes' %}" 
-             class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
-             {% if request.path == '/gestor-ordenes/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
-            <svg class="h-6 w-6 shrink-0 {% if request.path == '/gestor-ordenes/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-               <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-            Centro de Control
-          </a>
-        </li>
+        {% if user.is_superuser or user.groups.all.0.name == "GERENCIA" or user.groups.all.0.name == "ADMINISTRACION" %}
         
-        {% if user.profile.position_FK.permission_code != "RESTRICTED" %}
-          <li>
-            <a href="{% url 'Register' %}" 
-               class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
-               {% if request.path == '/registro/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
-              <svg class="h-6 w-6 shrink-0 {% if request.path == '/registro/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-              </svg>
-              Nuevo Usuario
+            <li>
+            <a href="{% url 'Home' %}" 
+                class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
+                {% if request.path == '/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
+                <svg class="h-6 w-6 shrink-0 {% if request.path == '/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Dashboard General
             </a>
-          </li>
+            </li>
+
+            <li>
+            <a href="{% url 'gestor_ordenes' %}" 
+                class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
+                {% if request.path == '/gestor-ordenes/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
+                <svg class="h-6 w-6 shrink-0 {% if request.path == '/gestor-ordenes/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                Centro de Control
+            </a>
+            </li>
+
         {% endif %}
 
+        {% if user.groups.all.0.name == "TECNICOS" %}
         <li>
-          <a href="{% url 'User' %}" 
-             class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
-             {% if request.path == '/usuarios/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
-            <svg class="h-6 w-6 shrink-0 {% if request.path == '/usuarios/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            Gestión de Usuarios
-          </a>
-        </li> 
+            <a href="{% url 'portal_tecnico' %}" 
+               class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
+               {% if '/portal-tecnico/' in request.path %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
+              <svg class="h-6 w-6 shrink-0 {% if '/portal-tecnico/' in request.path %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+              </svg>
+              Mi Portal Móvil
+            </a>
+        </li>
+        {% endif %}
+        
+        {% if user.is_superuser or user.groups.all.0.name == "GERENCIA" %}
+            
+            <li class="my-4 border-t border-slate-100"></li>
+            <div class="text-xs font-semibold leading-6 text-slate-400 uppercase tracking-wider mb-2 px-2">Administración</div>
+
+            <li>
+                <a href="{% url 'Register' %}" 
+                class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
+                {% if request.path == '/registro/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
+                <svg class="h-6 w-6 shrink-0 {% if request.path == '/registro/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                </svg>
+                Nuevo Usuario
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'User' %}" 
+                class="group flex gap-x-3 rounded-lg p-2 text-sm leading-6 font-medium transition-all duration-200
+                {% if request.path == '/usuarios/' %} bg-slate-100 text-blue-700 {% else %} text-slate-600 hover:bg-slate-50 hover:text-blue-600 {% endif %}">
+                <svg class="h-6 w-6 shrink-0 {% if request.path == '/usuarios/' %} text-blue-600 {% else %} text-slate-400 group-hover:text-blue-600 {% endif %}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                Gestión de Usuarios
+                </a>
+            </li> 
+        {% endif %}
 
         <li class="my-4 border-t border-slate-100"></li>
 

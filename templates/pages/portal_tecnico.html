@@ -1,160 +1,156 @@
-{% extends 'components/Layout/base_extendido.html' %}
-{% load static %} 
-{% load tailwind_filters %}
+{% extends 'components/Layout/base.html' %}
+{% load static %}
 
-{% block head_title %}
-  Registrar Usuario
-{% endblock head_title %}
-
-{% block content_main %} 
-
-
-
-    <div class="bg-gray-800 p-4 shadow-md sticky top-0 z-10">
-        <h1 class="text-xl font-bold text-white text-center">Mis Órdenes de Trabajo</h1>
+{% block content %}
+<div class="min-h-screen bg-slate-100 pb-20 font-sans">
+    
+    <div class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50 flex justify-between items-center">
+        <div>
+            <h1 class="font-bold text-lg tracking-tight">Portal Técnico</h1>
+            <p class="text-xs text-slate-400">Técnico: {{ user.first_name }} {{ user.last_name }}</p>
+        </div>
+        <a href="{% url 'account_logout' %}" class="bg-slate-800 p-2 rounded-full text-slate-300 hover:text-white transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </a>
     </div>
 
-    <div id="lista-mis-ordenes" class="p-4 space-y-4">
-        <p class="text-center text-gray-400 py-10">Cargando órdenes...</p>
-    </div>
-   
-    <script>
-        // --- Helper CSRF ---
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        const csrftoken = getCookie('csrftoken');
+    <div class="p-4 max-w-lg mx-auto">
+        
+        {% if error_tecnico %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            <strong class="font-bold">Error:</strong> Tu usuario no está vinculado como Técnico.
+        </div>
+        {% endif %}
 
-        // --- Función para actualizar estado ---
-        async function updateOrderStatus(ordenId, nuevoEstado) {
-            const card = document.getElementById(`orden-${ordenId}`);
-            card.style.opacity = '0.5';
+        <div class="flex justify-between items-center mb-6 mt-2">
+            <h2 class="text-slate-500 font-bold uppercase text-xs tracking-wider">Mis Asignaciones</h2>
+            <span class="text-xs font-bold bg-blue-600 text-white px-3 py-1 rounded-full shadow-sm">
+                {{ ordenes|length }} Pendientes
+            </span>
+        </div>
 
-            try {
-                const response = await fetch(`/api/v1/ordenes/${ordenId}/`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrftoken
-                    },
-                    body: JSON.stringify({
-                        estado: nuevoEstado
-                    })
-                });
-
-                if (response.ok) {
-                    // Si se actualiza, recargamos la lista
-                    loadMyOrders();
-                } else {
-                    const errorData = await response.json();
-                    alert(`Error: ${JSON.stringify(errorData)}`);
-                    card.style.opacity = '1';
-                }
-            } catch (error) {
-                console.error("Error al actualizar estado:", error);
-                card.style.opacity = '1';
-            }
-        }
-
-        // --- Función para renderizar tarjetas ---
-        function createOrderCard(orden) {
-            const card = document.createElement('div');
-            card.className = 'bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-gray-700';
-            card.id = `orden-${orden.id}`;
-
-            // Botones de acción según el estado
-            let buttons = '';
-            if (orden.estado === 'ASIGNADA') {
-                buttons = `
-                    <button 
-                        onclick="updateOrderStatus(${orden.id}, 'EN_CAMINO')"
-                        class="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">
-                        Marcar "En Camino"
-                    </button>
-                `;
-            } else if (orden.estado === 'EN_CAMINO') {
-                buttons = `
-                    <button 
-                        onclick="updateOrderStatus(${orden.id}, 'EN_PROCESO')"
-                        class="w-full mt-4 px-4 py-2 bg-yellow-500 text-gray-900 rounded-lg font-semibold hover:bg-yellow-600">
-                        Marcar "Inicié Trabajo" (En Proceso)
-                    </button>
-                `;
-            } else if (orden.estado === 'EN_PROCESO') {
-                buttons = `
-                    <button 
-                        onclick="updateOrderStatus(${orden.id}, 'TERMINADO')"
-                        class="w-full mt-4 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">
-                        Marcar "Trabajo Terminado"
-                    </button>
-                `;
-            }
-
-            card.innerHTML = `
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-bold text-gray-500 dark:text-gray-400">OT #${orden.id}</span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded ${orden.estado === 'ASIGNADA' ? 'bg-yellow-200 text-yellow-800' : 'bg-blue-200 text-blue-800'}">
-                        ${orden.estado}
-                    </span>
+        <div class="space-y-5">
+            {% for orden in ordenes %}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative" id="card-orden-{{ orden.id }}">
+                
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 
+                    {% if orden.prioridad == 'ALTA' %} bg-red-500 
+                    {% elif orden.prioridad == 'MEDIA' %} bg-yellow-500 
+                    {% else %} bg-blue-500 {% endif %}">
                 </div>
-                <h3 class="font-semibold text-gray-900 dark:text-gray-100 text-md mb-2">${orden.cliente_detalle?.nombre || 'Cliente'}</h3>
-                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2"><strong>Dirección:</strong> ${orden.cliente_detalle?.direccion || 'No especificada'}</p>
-                <p class="text-sm text-gray-700 dark:text-gray-300 mb-3"><strong>Falla:</strong> ${orden.descripcion}</p>
-                
-                ${buttons}
-            `;
-            return card;
-        }
 
-        // --- Función Principal de Carga ---
-        async function loadMyOrders() {
-            const container = document.getElementById('lista-mis-ordenes');
-            container.innerHTML = '<p class="text-center text-gray-400 py-10">Cargando órdenes...</p>';
-            
-            try {
-                // Esta es la API segura que creamos
-                const response = await fetch('/api/v1/mis-ordenes/');
-                
-                if (!response.ok) {
-                    if (response.status === 403) {
-                         container.innerHTML = '<p class="text-center text-red-400 py-10">Error: No tienes permiso o no eres un técnico válido.</p>';
-                    } else {
-                         container.innerHTML = '<p class="text-center text-red-400 py-10">Error al cargar datos.</p>';
-                    }
-                    return;
+                <div class="pl-5 p-5">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="font-mono text-xs text-slate-400 font-bold">ORDEN #{{ orden.id }}</span>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide
+                            {% if orden.estado == 'ASIGNADA' %} bg-yellow-100 text-yellow-700 border border-yellow-200
+                            {% elif orden.estado == 'EN_CAMINO' %} bg-blue-100 text-blue-700 border border-blue-200
+                            {% elif orden.estado == 'EN_PROCESO' %} bg-purple-100 text-purple-700 border border-purple-200
+                            {% endif %}">
+                            {{ orden.get_estado_display|default:orden.estado }}
+                        </span>
+                    </div>
+
+                    <h3 class="text-lg font-bold text-slate-900 mb-1 leading-tight">
+                        {{ orden.cliente.nombre }}
+                    </h3>
+                    
+                    <p class="text-sm text-slate-500 mb-4 flex items-start gap-1.5">
+                        <svg class="w-4 h-4 text-slate-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>{{ orden.direccion|default:orden.cliente.direccion }}</span>
+                    </p>
+                    
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-5">
+                        <p class="text-xs text-slate-700 font-medium leading-relaxed">
+                            <span class="font-bold text-slate-900 block mb-1">Solicitud:</span> 
+                            {{ orden.descripcion }}
+                        </p>
+                    </div>
+
+                    <div class="grid gap-3">
+                        <a href="https://waze.com/ul?q={{ orden.direccion }}" target="_blank" class="flex justify-center items-center gap-2 w-full py-2.5 bg-white border border-slate-200 text-slate-600 font-semibold rounded-lg hover:bg-slate-50 transition-colors text-sm shadow-sm">
+                            <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            Navegar con Waze
+                        </a>
+
+                        {% if orden.estado == 'ASIGNADA' %}
+                            <button onclick="cambiarEstado({{ orden.id }}, 'EN_CAMINO')" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                🚗 Iniciar Trayecto
+                            </button>
+                        {% elif orden.estado == 'EN_CAMINO' %}
+                            <button onclick="cambiarEstado({{ orden.id }}, 'EN_PROCESO')" class="w-full py-3 bg-purple-600 text-white font-bold rounded-lg shadow-md hover:bg-purple-700 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                🛠️ Llegué / Iniciar Trabajo
+                            </button>
+                        {% elif orden.estado == 'EN_PROCESO' %}
+                            <button onclick="cambiarEstado({{ orden.id }}, 'TERMINADA')" class="w-full py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                ✅ Finalizar Orden
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <div class="flex flex-col items-center justify-center py-20 text-center">
+                    <div class="bg-white p-6 rounded-full shadow-sm mb-4">
+                        <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    </div>
+                    <h3 class="text-slate-800 font-bold text-lg">¡Todo Listo!</h3>
+                    <p class="text-slate-500 text-sm mt-1 max-w-[200px]">No tienes órdenes asignadas en este momento.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
-
-                const ordenes = await response.json();
-                container.innerHTML = ''; // Limpiamos
-
-                if (ordenes.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-400 py-10">No tienes órdenes asignadas por el momento.</p>';
-                } else {
-                    ordenes.forEach(orden => {
-                        container.appendChild(createOrderCard(orden));
-                    });
-                }
-
-            } catch (error) {
-                console.error("Error al cargar mis órdenes:", error);
-                container.innerHTML = '<p class="text-center text-red-400 py-10">Error de conexión.</p>';
             }
         }
+        return cookieValue;
+    }
 
-        document.addEventListener('DOMContentLoaded', loadMyOrders);
-    </script>
+    async function cambiarEstado(ordenId, nuevoEstado) {
+        if (!confirm("¿Confirmar cambio de estado?")) return;
 
-  {% include 'components/mensajes.html' %}  
+        const csrftoken = getCookie('csrftoken');
+        const card = document.getElementById(`card-orden-${ordenId}`);
+        if(card) card.style.opacity = '0.5'; // Feedback visual
 
-{% endblock content_main %}
+        try {
+            const response = await fetch(`/orden/${ordenId}/cambiar-estado/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ estado: nuevoEstado })
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'ok') {
+                // Recargar para ver el cambio (y que desaparezca si se terminó)
+                window.location.reload();
+            } else {
+                alert("Error: " + data.mensaje);
+                if(card) card.style.opacity = '1';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert("Error de conexión al servidor.");
+            if(card) card.style.opacity = '1';
+        }
+    }
+</script>
+
+{% include 'components/mensajes.html' %}  
+{% endblock content %}
